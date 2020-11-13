@@ -9,7 +9,8 @@ from datetime import datetime
 
 #%%
 #create date range for wanted dates
-date_list = pd.date_range(start="2019-12-01",end="2020-11-12")
+today = datetime.today().strftime('%Y-%m-%d')
+date_list = pd.date_range(start="2019-12-01",end=today)
 date_list = date_list.to_series().dt.date
 
 #create country list
@@ -38,16 +39,37 @@ country_list = ["USA", "Germany", "Spain", "Switzerland", "Australia", "Brasil",
 
 #dictionary for the country code which is needed for twitter search querry to specify language
 # otherwise get results from german twitter users in each country (at least in tests we did)
-lang_code = {"USA":"en", "Germany":"de", "Spain":"es", "Switzerland":"de", "Australia":"en", "Brasil":"pt", "Irland":"en",
+country_lang_code = {"USA":"en", "Germany":"de", "Spain":"es", "Switzerland":"de", "Australia":"en", "Brasil":"pt", "Irland":"en",
              "Austria":"de", "Singapore":"en", "India":"en", "France":"fr", "Sweden":"sv", "Argentina":"es",
              "Hongkong":"en", "Mexico":"es",
              "Deutschland":"de", "Spanien":"es", "Schweiz":"de", "Australien":"en", "Brasilien":"pt",
              "Österreich":"de", "Singapur":"en", "Indien":"en", "Frankreich":"fr", "Schweden":"sv", "Argentinien":"es"}
 
 
+capital_list = ['Washington, D.C.', 'Berlin', 'Madrid', 'Bern', 'Canberra', 'Brasilia', 'Dublin',
+                'Vienna', 'Singapore', 'New Delhi', 'Paris', 'Stockholm', 'Buenos Aires','Hongkong',
+                'Mexico City', 'Wien', 'Singapur','Neu-Delhi'
+                ]
+
+
+capital_lang_code = {'Washington, D.C.': 'USA', 'Berlin': 'Germany', 'Madrid': 'Spain', 'Bern': 'Switzerland',
+                     'Canberra': 'Australia', 'Brasilia': 'Brasil', 'Dublin': 'Irland', 'Vienna': 'Austria', 
+                     'Singapore': 'Singapore', 'New Delhi': 'India', 'Paris': 'France', 'Stockholm': 'Sweden',
+                     'Buenos Aires': 'Argentina', 'Hongkong': 'Hongkong', 'Mexico City': 'Mexico', 
+                     'Wien': 'Austria', 'Singapur': 'Singapore', 'Neu-Delhi': 'India'}
+ 
+
+
+
 #%%
+capital_lang_code = {capital_dict_en.get(k, k): v for k, v in lang_code.items()}
+dict((v,k) for k,v in capital_dict_de.items())
+
+#%% for tesing make lists smaller
 date_list = date_list[:2]
 country_list = country_list[:2]
+
+#%% filter by country
 #how long going to sleep after scraping one country done
 sleep_country = 60
 #how long going to sleep after one day has been scraped
@@ -61,7 +83,7 @@ for country in country_list:
         date1 = date
         date2 = date - pd.Timedelta(days = 1)
         
-        language = lang_code[country]
+        language = country_lang_code[country]
         
         config.Search = f"until:{date1} since:{date2} near:{country} lang:{language}"
         config.Store_object = True 
@@ -94,6 +116,9 @@ for country in country_list:
         date2 = date - pd.Timedelta(days = 1)
         
         language = lang_code[country]
+        
+        
+#%% filter by city
         
         
 
