@@ -37,7 +37,9 @@ get_Yahoo_Financials <- function(country,date) {
   #stopwords for cleaning
   stopwords <- c("AG","SE","Aktiengesellschaft","Kommanditgesellschaft auf Aktien",
                  "plc","Aktiengesellschaft in München","KGaA","AG & Co. KGaA",
-                 "SE & Co. KGaA","Inc","Co",", inc", "SA","Ltd","Limited","PLC","Plc")
+                 "SE & Co. KGaA","Inc","Co",", inc", "SA","Ltd","Limited","PLC","Plc",
+                 "(Holdings)","Societe en commandite par actions","(publ)","SCA","SAIC","Holding",
+                 "SAB","de","CV","S A B","C V")
   
   testit <- function(x)
   {
@@ -117,6 +119,8 @@ get_Yahoo_Financials <- function(country,date) {
       merge_Comp_Sec$`Company Name` <- str_remove(merge_Comp_Sec$`Company Name`, "[.]")
       merge_Comp_Sec$`Company Name` <- str_remove(merge_Comp_Sec$`Company Name`, "[,]")
       merge_Comp_Sec$`Company Name` <- str_remove(merge_Comp_Sec$`Company Name`, "[,]")
+      merge_Comp_Sec$`Company Name` <- str_remove(merge_Comp_Sec$`Company Name`, "\\(")
+      merge_Comp_Sec$`Company Name` <- str_remove(merge_Comp_Sec$`Company Name`, "\\)")
       merge_Comp_Sec$`Company Name` <- str_remove(merge_Comp_Sec$`Company Name`, "[&]")
       
       #create csv 
