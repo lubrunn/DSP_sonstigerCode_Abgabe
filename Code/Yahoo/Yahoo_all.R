@@ -125,7 +125,7 @@ get_Yahoo_Financials <- function(country,date) {
       
       #create csv 
       merge_Comp_Sec <- apply(merge_Comp_Sec,2,as.character)
-      write.csv(merge_Comp_Sec,paste0("Germany","_","Index_Components",".csv") ,row.names = F)
+      write.csv(merge_Comp_Sec,paste0(glue("{country}"),"_","Index_Components",".csv") ,row.names = F)
       
       lastdate <- as.Date(date)
       help <- rev(seq(lastdate,Sys.Date(), by = "days"))
