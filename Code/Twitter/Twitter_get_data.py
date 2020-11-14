@@ -61,7 +61,12 @@ biggest_city_list = ["New York City", "Los Angeles", "Chicago",
                      "Hongkong",
                      "Mexico City", "Ecatepec", "Guadalajara"]
 
-biggest_city_lang_code = 
+biggest_city_lang_code = {("New York City", "Los Angeles", "Chicago"):"en"}
+
+myDict = {
+  **dict.fromkeys(["New York City", "Los Angeles", "Chicago"], "en"), 
+  **dict.fromkeys(["Berlin", "Hamburg", "München","Munich"], "de")
+}
 #%% run the function
 twitter_scraper(data_path = r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data", 
                 near_list = capital_list, lang_dict = capital_lang_code, date_list = date_list, day_range = 1, 
