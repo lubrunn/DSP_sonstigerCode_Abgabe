@@ -22,8 +22,7 @@ lang_code = {"Austria":"de", "Singapore":"en", "India":"en", "France":"fr", "Swe
                 "USA":"en", "Germany":"de", "England":"en", "Spain":"es", "Italy":"it", "China":"zh", "Russia":"ru"}
 
 #%%
-date_list = date_list[:2]
-country_list = country_list[:2]
+
 
 time1 = time.time()
 config = twint.Config() 
@@ -32,7 +31,7 @@ date1 = "2019-12-01"
 date2 = "2019-11-30"
 
 language = "de"
-country = "Österreich"
+country = "Linz"
 
 config.Search = f"until:{date1} since:{date2} near:{country} lang:{language}"
 config.Store_object = True 
@@ -42,7 +41,7 @@ if not os.path.exists(country):
     os.mkdir(country)
 
 #c.Store_csv = True
-config.Limit = 100
+config.Limit = 1000
 config.Store_csv = True
 config.Output = f'{country}/{country}_{date2}.csv'
 twint.run.Search(config) 
