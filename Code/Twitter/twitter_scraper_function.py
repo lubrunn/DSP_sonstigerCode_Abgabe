@@ -1,8 +1,18 @@
+import pandas as pd
+import nest_asyncio
+nest_asyncio.apply()
+import twint
+import time
+
+import os
+
 #define the function
 def twitter_scraper(data_path, near_list, lang_dict, date_list, day_range = 1, 
                     sleep_location = 60, sleep_day = 1, tweet_goal = 1000000):
     # sleep_country = how long going to sleep after scraping one country done, default is 60 sec
     # sleep_day = how long going to sleep after one day has been scraped, default is 5 sec
+    
+    os.chdir(data_path)
     
     for location in near_list:
         time1 = time.time()
@@ -19,7 +29,7 @@ def twitter_scraper(data_path, near_list, lang_dict, date_list, day_range = 1,
             
             language = lang_dict[location]
             
-            config.Search = f"until:{date1} since:{date2} near:{location} lang:{language}"
+            config.Search = f'until:{date1} since:{date2} near:"{location}" lang:{language}'
             config.Store_object = True 
             
             #create a folder for each country
@@ -38,7 +48,7 @@ def twitter_scraper(data_path, near_list, lang_dict, date_list, day_range = 1,
             #store data
             config.Store_csv = True
             
-            config.Output = f'{data_path}/{location}/{location}_{date2}.csv'
+            config.Output = f'{location}/{location}_{date2}.csv'
             
             #run twitter search
             twint.run.Search(config) 
