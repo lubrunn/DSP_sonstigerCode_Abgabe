@@ -7,6 +7,7 @@ nest_asyncio.apply()
 import twint
 import time
 from datetime import datetime
+import os
 
 #%%
 #create date range for wanted dates
@@ -45,6 +46,9 @@ capital_lang_code = {'Washington, D.C.': 'en', 'Berlin': 'de', 'Madrid': 'es', '
                      'Wien': 'de', 'Singapur': 'en', 'Neu-Delhi': 'en'}
 
 
+
+
+
 biggest_city_list = ["New York City", "Los Angeles", "Chicago",
                      "Berlin", "Hamburg", "München","Munich",
                      "Madrid", "Barcelona", "Valencia",
@@ -61,13 +65,25 @@ biggest_city_list = ["New York City", "Los Angeles", "Chicago",
                      "Hongkong",
                      "Mexico City", "Ecatepec", "Guadalajara"]
 
-biggest_city_lang_code = {("New York City", "Los Angeles", "Chicago"):"en"}
 
-myDict = {
+
+biggest_city_lang_code = {
   **dict.fromkeys(["New York City", "Los Angeles", "Chicago"], "en"), 
-  **dict.fromkeys(["Berlin", "Hamburg", "München","Munich"], "de")
+  **dict.fromkeys(["Berlin", "Hamburg", "München","Munich"], "de"),
+  **dict.fromkeys(["Madrid", "Barcelona", "Valencia"], "es"),
+  **dict.fromkeys(["Zürich", "Geneva", "Basel","Genf"], "de"),
+  **dict.fromkeys(["Sydney", "Melbourne", "Brisbane"], "en"),
+  **dict.fromkeys(["Sao Paulo", "Rio de Janeiro", "Brasilia"], "pt"),
+  **dict.fromkeys(["Dublin", "Cork", "Limerick"], "en"),
+  **dict.fromkeys(["Vienna", "Graz", "Linz","Wien"], "de"),
+  **dict.fromkeys(["Singapore", "Singapur"], "en"),
+  **dict.fromkeys(["Mumbai", "New Delhi", "Kolkata", "Neu-Delhi"], "en"),
+  **dict.fromkeys(["Paris", "Marseille", "Lyon"], "fr"),
+  **dict.fromkeys(["Stockholm", "Gothenburg", "Malmö"], "sv"),
+  **dict.fromkeys(["Hongkong"], "en"),
+  **dict.fromkeys(["Mexico City", "Ecatepec", "Guadalajara"], "es")
 }
 #%% run the function
 twitter_scraper(data_path = r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data", 
-                near_list = capital_list, lang_dict = capital_lang_code, date_list = date_list, day_range = 1, 
+                near_list = biggest_city_list, lang_dict = biggest_city_lang_code, date_list = date_list, day_range = 1, 
                     sleep_location = 60, sleep_day = 1, tweet_goal = 1000000)
