@@ -30,10 +30,10 @@ config = twint.Config()
 date1 = "2019-12-01"
 date2 = "2019-11-30"
 
-language = "de"
-country = "Linz"
+language = "en"
+country = "Washington, D.C."
 
-config.Search = f"until:{date1} since:{date2} near:{country} lang:{language}"
+config.Search = f'until:{date1} since:{date2} near:"{country}" lang:{language}'
 config.Store_object = True 
 
 #create a folder for each country
@@ -41,7 +41,7 @@ if not os.path.exists(country):
     os.mkdir(country)
 
 #c.Store_csv = True
-config.Limit = 1000
+config.Limit = 2900
 config.Store_csv = True
 config.Output = f'{country}/{country}_{date2}.csv'
 twint.run.Search(config) 
