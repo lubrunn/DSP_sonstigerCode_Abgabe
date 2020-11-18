@@ -12,7 +12,7 @@ library(xml2)
 library(anytime)
 
 #"2020-01-01" format
-
+#change path for csv files
 get_Yahoo_Financials <- function(country,date) {
   
   #dictionary
@@ -70,7 +70,7 @@ get_Yahoo_Financials <- function(country,date) {
       
       text_raw <- html %>% html_nodes(xpath='//*[contains(concat( " ", @class, " " ), concat( " ", "Mb(25px)", " " ))]') 
       
-      if (length(text_raw) == 0){
+      if (length(text_raw) == 0 | length(text_raw) == 1){
         sector <- "NA"
         branch <- "NA"
         
