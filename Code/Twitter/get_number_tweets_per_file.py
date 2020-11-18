@@ -19,3 +19,9 @@ for folder in folders:
         df_series = pd.DataFrame(data = [[folder, file, count]], columns = ["Location", "File", "number_tweets"])
         df = pd.concat([df, df_series])
 
+#%%
+df["number_tweets"] = df["number_tweets"].astype("int64")
+#%%
+df_alldays = df.groupby("Location").filter(lambda x: len(x) > 345)
+#%%
+df_alldays_group = df_alldays.groupby("Location")["number_tweets"].mean()
