@@ -61,5 +61,5 @@ def twitter_scraper_company(data_path, companies, date_list, day_range = 1,
             print(f"The process for {date2} for {company} took {round(time.time() - time2)} seconds. Going {sleep_day} seconds to sleep.")
             
             time.sleep(sleep_day)
-        print(f"The overall process for {company} took {round(time.time() - time1)} seconds. Going {sleep_company seconds to sleep.")
+        print(f"The overall process for {company} took {round(time.time() - time1)} seconds. Going {sleep_company} seconds to sleep.")
         time.sleep(sleep_company)
