@@ -20,7 +20,7 @@ date_list = date_list.to_series().dt.date
 
 #how long going to sleep after one day has been scraped
 sleep_day = 5
-number_tweets = 5000
+number_tweets = 1000
 
 for date in date_list:
     time1 = time.time()
@@ -29,9 +29,9 @@ for date in date_list:
     date1 = date
     date2 = date - pd.Timedelta(days = 1)
     
-    language = "en"
+    language = "de"
     
-    config.Search = f"until:{date1} since:{date2} lang:{language}"
+    config.Search = f"min_retweets:10 until:{date1} since:{date2} lang:{language}"
     config.Store_object = True 
     
     
