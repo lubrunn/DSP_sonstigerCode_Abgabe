@@ -26,10 +26,7 @@ get_Yahoo_update <- function(country) {
     proc.time() - p1 
   }
   
-  country_key <- list("Germany" = "GDAXI","USA" = "DJI","Spain"="IBEX","Switzerland"="SSMI",
-                      "Australia"="AXAT","Brasil"="BVSP","Ireland"="ISEQ","Austria"="ATX",
-                      "Singapore"="STI%3FP%3D%5ESTI","India"="NSEI","France"="FCHI","Sweden"="OMX",
-                      "Argentina"="MERV","Hong Kong"="HSI","Mexico"="MXX")
+  country_key <- list("Germany" = "GDAXI","USA" = "DJI")
 
 
 
