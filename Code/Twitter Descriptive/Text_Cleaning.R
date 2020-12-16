@@ -1,3 +1,6 @@
+if(!require("corpus")) install.packages("corpus")
+if(!require("hunspell")) install.packages("hunspell")
+
 library(tidyverse)
 
 library(jsonlite)
@@ -14,6 +17,9 @@ library('rJava')
 library(qdap)
 
 library(textclean)
+
+library(corpus)
+library(hunspell)
 
 #### read in data
 tweets_raw <- stream_in(file("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/NoFilter/En_NoFilter_2020-03-29.json"))
@@ -58,7 +64,8 @@ tweets$text <- replace_tag(tweets$text) #removes twitter handles
 tweets$text <- replace_rating(tweets$text) #0/10 becomes terrible, 5 stars becomes best
 tweets$text <- replace_url(tweets$text) #removes urls from text
 tweets$text <- replace_white(tweets$text) #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
-
+### convert all tweets to lower case
+tweets$text <- tolower(tweets$text)
 
 
 tweets$text <- add_comma_space(tweets$text) #adds space after comma so later one,two,three does not become onetwothree
@@ -77,7 +84,22 @@ tweets$text <- str_replace_all(tweets$text,"#[a-z,A-Z]*","")
 #tweets$text <- str_replace_all(tweets$text," "," ")
 
 
+###### stemming
+a <- text_tokens(tweets$text, stemmer = "en")
 
+stem_hunspell <- function(term) {
+  # look up the term in the dictionary
+  stems <- hunspell::hunspell_stem(term)[[1]]
+  
+  if (length(stems) == 0) { # if there are no stems, use the original term
+    stem <- term
+  } else { # if there are multiple stems, use the last one
+    stem <- stems[[length(stems)]]
+  }
+  
+  stem
+}
+tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
 
 #set the schema:docs
 docs <- tm::DataframeSource(tweets)
@@ -101,6 +123,7 @@ clean_corpus <- function(corpus){
 }
 
 text_corpus <- clean_corpus(VCorpus(docs))
+
 
 
 content(text_corpus[[1]])
