@@ -1,4 +1,10 @@
 import os
+import re
+from datetime import datetime
+import numpy as np
+import pandas as pd
+
+#%%
 
 
 
@@ -41,3 +47,22 @@ elif folder in nofilter_folders:
     
     # get all files for the nofilter folder
     files = os.listdir(os.path.join(path,folder))
+    
+#%%
+# check what is the last date for which tweets were scraped
+
+# extract date from file names
+dates = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files]
+
+# convert to dates
+dates_list = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
+
+# find last date
+last_update = max(dates_list)
+
+# find dates between last scrape and today
+today = datetime.today().strftime('%Y-%m-%d')
+missing_dates = pd.date_range(start=last_update,end=today)
+
+
+
