@@ -27,8 +27,7 @@ get_Yahoo_update <- function(country) {
   if (!require("lubridate")) install.packages("lubridate")
   library(lubridate)
   
-  setwd("/home/simonhassler/share/OneDrive/Stocks/") # <- your path to the stocks folder on onedrive
-  
+
   
   # create key for referencing
   country_key <- list("Germany" = "GDAXI","USA" = "DJI")
