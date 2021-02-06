@@ -27,6 +27,8 @@ get_Yahoo_update <- function(country) {
   if (!require("lubridate")) install.packages("lubridate")
   library(lubridate)
   
+  setwd("/home/simonhassler/share/OneDrive/Stocks/") # <- your path to the stocks folder on onedrive
+  
   
   # create key for referencing
   country_key <- list("Germany" = "GDAXI","USA" = "DJI")
@@ -41,13 +43,13 @@ get_Yahoo_update <- function(country) {
   }
   
   # load the file with all the symbols
-  df_index <- read_csv(paste0(glue("{country}"),"_Index_Components",".csv"))
+  df_index <- read_csv(paste0(glue("{country}"),"/",glue("{country}"),"_Index_Components",".csv"))
   #store symbols in dataframe
   symbol = df_index$Symbol
   
   for (k in symbol){
     
-    data <- read_csv(paste0(glue("{country}"),"_",k,".csv")) # paste new path of respective directory
+    data <- read_csv(paste0(glue("{country}"),"/",glue("{country}"),"_",k,".csv")) # paste new path of respective directory
     
     # get the most recent date from the dataframe
     last_date <- gsub(",", "", data$Date[1], fixed = TRUE)
@@ -82,13 +84,13 @@ get_Yahoo_update <- function(country) {
     # delete duplicate values
     data <- data[!duplicated(data$Date), ]
     # overwrite the old data set with the complete data set for today
-    write.csv(data,paste0(  glue("{country}"),"_",glue("{k}"),".csv"),row.names = F )
+    write.csv(data,paste0(glue("{country}"),"/",glue("{country}"),"_",glue("{k}"),".csv"),row.names = F )
     
   }
   # same procedure for the index
   for (i in index) {
     
-    data <- read_csv(paste0(glue("{country}"),"_",i,".csv")) # paste new path of respective directory
+    data <- read_csv(paste0(glue("{country}"),"/",glue("{country}"),"_",i,".csv")) 
     
     last_date <- gsub(" ", "", data$Date[1], fixed = TRUE)
     last_date <- as.Date(last_date, "%d %b %Y")
@@ -111,7 +113,7 @@ get_Yahoo_update <- function(country) {
     
     data <- rbind(index_hist,data)
     data <- data[!duplicated(data$Date), ]
-    write.csv(data,paste0(glue("{country}"),"_",glue("{i}"),".csv"),row.names = F )
+    write.csv(data,paste0(glue("{country}"),"/",glue("{country}"),"_",glue("{i}"),".csv"),row.names = F )
   }
 }
 
