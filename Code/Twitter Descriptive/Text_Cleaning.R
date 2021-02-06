@@ -32,8 +32,8 @@ tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, date,
                                 likes_count, retweet)
 
 tweets <- tweets[1,]
-tweets$text <- "Mr. Jones @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD 😭 :D lol and
-                stopwords i could have really done it myself"
+tweets$text <- "Mr. Jones @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself
+"
 
 
 tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
@@ -83,10 +83,7 @@ tweets$text <- str_replace_all(tweets$text,"#[a-z,A-Z]*","")
 #get rid of unnecessary spaces
 #tweets$text <- str_replace_all(tweets$text," "," ")
 
-
-###### stemming
-a <- text_tokens(tweets$text, stemmer = "en")
-
+######### stemming
 stem_hunspell <- function(term) {
   # look up the term in the dictionary
   stems <- hunspell::hunspell_stem(term)[[1]]
@@ -100,6 +97,7 @@ stem_hunspell <- function(term) {
   stem
 }
 tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
+tweets$text <- paste(unlist(tweets$text), collapse = " ")
 
 #set the schema:docs
 docs <- tm::DataframeSource(tweets)
@@ -139,6 +137,6 @@ dtm <- removeSparseTerms(dtm, 0.99)
 dtm_m <- as.matrix(dtm)
 
 #check matrix
-dtm_m[1:5, 1:10]
+dtm_m[1,]
 
 rm(docs, dtm, text_corpus, tweets_raw, clean_corpus)

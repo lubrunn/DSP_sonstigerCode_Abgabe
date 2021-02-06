@@ -2,17 +2,19 @@ import nltk
 nltk.download('vader_lexicon')
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import pandas as pd
+
+
+import numpy as np
+import math
+#%%
 def get_sentiment(text):
     sentiment = pd.DataFrame([sid_obj.polarity_scores(text)])
     return sentiment["compound"]
-
-import numpy as np
-#%%
-
 sid_obj = SentimentIntensityAnalyzer()
 get_sentiment("VADER is smart, handsome, and funny")
 
 #%%
+sid_obj = SentimentIntensityAnalyzer()
 sentiment = sid_obj.polarity_scores("smart handsome funny")
 
 #%%
@@ -42,7 +44,7 @@ funny = 1.9
 funny2 = 0.53852
 
 #%%
-first = np.array([smart, handsome, funny, is_word, VADER, and_word])
+first = np.array([smart, handsome, funny])
 sec = np.array([smart2, handsome2, funny2])
 
 #%%
@@ -79,46 +81,6 @@ print(normalize(sum(first)))
 text = "VADER is smart, handsome, and funny"
 
 
-# convert emojis to their textual descriptions
-text_no_emoji = ""
-prev_space = True
-for chr in text:
-    if chr in self.emojis:
-        # get the textual description
-        description = self.emojis[chr]
-        if not prev_space:
-            text_no_emoji += ' '
-        text_no_emoji += description
-        prev_space = False
-    else:
-        text_no_emoji += chr
-        prev_space = chr == ' '
-text = text_no_emoji.strip()
-
-sentitext = SentiText(text)
-
-sentiments = []
-words_and_emoticons = sentitext.words_and_emoticons
-for i, item in enumerate(words_and_emoticons):
-    valence = 0
-    # check for vader_lexicon words that may be used as modifiers or negations
-    if item.lower() in BOOSTER_DICT:
-        sentiments.append(valence)
-        continue
-    if (i < len(words_and_emoticons) - 1 and item.lower() == "kind" and
-            words_and_emoticons[i + 1].lower() == "of"):
-        sentiments.append(valence)
-        continue
-
-    sentiments = self.sentiment_valence(valence, sentitext, item, i, sentiments)
-
-sentiments = self._but_check(words_and_emoticons, sentiments)
-
-valence_dict = self.score_valence(sentiments, text)
-
-return valence_dict
-        
-
 
 #%%
 lexicon_full_filepath = r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\Sentiment Analysis\vaderSentiment-master\vaderSentiment\vader_lexicon.txt"
@@ -130,3 +92,31 @@ for line in lexicon_full_filepath.rstrip('\n').split('\n'):
             lex_dict[word] = float(measure)
             
             
+#%% try different text
+text = "VADER is VERY SMART, uber handsome, and FRIGGIN FUNNY!!!"
+            
+sid_obj = SentimentIntensityAnalyzer()
+sentiment = sid_obj.polarity_scores(text) 
+
+
+#%%
+smart = 1.7 + 0.733 + 0.733 + 0.293
+handsome = 2.2 + 0.293 + 0.9 * (0.733 + 0.293)
+funny = 1.9 + 0.733 + 0.293 + 0.733 + 3 * 0.292  
+
+'''
+SMART = 1.7 + 0.733 (C_INCR thru CAPS) + 0.9 * (0.733 + 0.293) (dampened effect of booster on handsome, boosters have effect on next word: 1, second next word: 0.95 and thrid next word: 0.9, with all words included)
+FUNNY = 1.9 + 0.733 (C_INCR thru CAPS)
+VERY = +C_INCR = 0.293 (B_INCR thru booster word) + 0.733 (C_INCR thru CAPS)
+uber = +B_INCR = 0.293 (B_INCR thru booster word)
+FRIGGIN = +C_INCR = 0.293 (B_INCR thru booster word) + 0.733 0.733 (C_INCR thru CAPS)
+!!! = 3 * 0.292
+'''
+
+all_val = [smart, handsome, funny]
+print(round(normalize(sum(all_val)), 4))
+
+#%%
+list(text.split())
+
+
