@@ -40,7 +40,7 @@ nofilter_folders = [k for k in folders if "NoFilter" in k]
 i = 0
 folder = folders[i]
 missing_dates_dic = {}
-folders = iter(folders)
+
 for folder in folders:
     # two cases, first case:
     # for companies where the company folders contain subfolders for each company
@@ -77,14 +77,67 @@ for folder in folders:
         
         # save missing dates to folder name into dict
         missing_dates_dic[folder] = missing_dates
+ 
+#%% scrape missing dates for each folder 
+
+# create df that contains info for limit, search terms etc.
+info_df = pd.DataFrame(data = np.empty((10,4)),
+    columns = ["folder", "min_retweets", "lang", "limit"]) 
+
+# fill df
+info_df.iloc[0,:] = ["NoFilter_de", 0, "de", 20000]  
+info_df.iloc[1,:] = ["NoFilter_min_retweets_2_de", 2, "de", 40000]  
+info_df.iloc[2,:] = ["NoFilter_en", 0, "en", 20000]  
+info_df.iloc[3,:] = ["NoFilter_min_retweets_2_en", 2, "en", 20000]  
+info_df.iloc[4,:] = ["NoFilter_min_retweets_10_en", 10, "en", 20000]  
+info_df.iloc[5,:] = ["NoFilter_min_retweets_50_en", 50, "en", 20000]  
+info_df.iloc[6,:] = ["NoFilter_min_retweets_100_en", 100, "en",20000]  
+info_df.iloc[7,:] = ["NoFilter_min_retweets_200_en", 200, "en", 40000]  
+info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
+info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
+
+#%%
+folder = folders[0]
+# scrape missing dates for each folder
+for folder in [k for k in folders if k in company_folders or k in nofilter_folders]:
+    # check search terms from info_df
+    min_retweets = int(info_df.loc[info_df["folder"] == folder, "min_retweets"].values[0])
+    lang = info_df.loc[info_df["folder"] == folder, "lang"].values[0]
+    limit = int(info_df.loc[info_df["folder"] == folder, "limit"].values[0])
+    
+    # different process for company scraping
+    if folder in company_folders:
+        path_new = os.path.join(path, folder)
+        
+        # list all subfolders (one per company)
+        subfolders = os.listdir(path_new)
+        
+        # for each company
+        for subfolder in subfolders:
+            # folder is called company_name
+            search_name = subfolder
+            
+            # set up first part of search term (without dates)
+            search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
+            
+            # go thru datelist and scrape once for each day
+            for date in missing_dates_dic[subfolder]:
+                date1 = date.date()
+                date2 = (date - pd.Timedelta(days = 1)).date()
+                
+                search_term = f"{search_term1} unitl:{date1} since:{date2}"
+                print(search_term)
+    elif folder in nofilter_folders:
+        # setup first part of search term without dates
+        search_term1 = f"min_retweets:{min_retweets} lang:{lang}"
+        # go thru datelist and scrape once for each day
+        for date in missing_dates_dic[subfolder]:
+                date1 = date.date()
+                date2 = (date - pd.Timedelta(days = 1)).date()
+                
+                search_term = f"{search_term1} unitl:{date1} since:{date2}"
+                print(search_term)
+        
     
     
-
-
-
     
-    
-    
-
-
-
