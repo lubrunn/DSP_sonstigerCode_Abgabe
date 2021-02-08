@@ -12,19 +12,38 @@ today = datetime.today().strftime('%Y-%m-%d')
 dates_list_needed = pd.date_range(start="2018-12-01",end=today)
 
 #%%
+
 def date_missing_finder(files):
+    '''
+    
+
+    Parameters
+    ----------
+    files : list of all files in a given folder
+    
+    PROCESS
+    ----------
+    extract dates of tweet files and find missing dates that still need
+    to be scraped
+
+    Returns
+    -------
+    missing_dates : list of dates that still need to be scraped for a specific
+    folder
+
+    '''
     # only use json files
     files = [k for k in files if ".json" in k]
     
-    # check what is the last date for which tweets were scraped
-    
+    ### check what is the last date for which tweets were scraped
     # extract date from file names
     dates = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files]
     
     # convert to dates
     dates_list_have = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
     
-    # find all missing dates
+    # find all missing dates by checking difference between the dates we have 
+    # and the dates that we should have (dates_list_needed)
     missing_dates = [k for k in date_list_needed if k not in dates_list]
     
     return missing_dates
@@ -105,6 +124,28 @@ info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]
 
 #%% read in search terms for companies
 search_terms_companies = pd.read_excel(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\twitter handles.xlsx")
+
+# drop with rows are only NAs
+search_terms_companies = search_terms_companies[search_terms_companies["Company"].notna()]
+
+# company name as index
+search_terms_companies = search_terms_companies.set_index("Company", drop = False)
+
+# for each row join all non-nas to a search term separated with OR
+# set up new column
+search_terms_companies["search_term"] = None
+for i in range(0,len(search_terms_companies)):
+    
+    # get all twitter handles and merge them to one search term
+    terms = [k for k in search_terms_companies.iloc[i,:].tolist() if str(k) != "nan" and k != None]
+    search_term_comp = ' OR '.join(terms)
+    
+    # store in df
+    search_terms_companies.iloc[i,search_terms_companies.shape[1] - 1] = search_term_comp
+    
+    
+# only keep search term column
+search_terms_companies = search_terms_companies[["search_term"]]
 #%%
 folder = folders[0]
 search_term_dict = {}
@@ -124,8 +165,8 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         
         # for each company
         for subfolder in subfolders:
-            # folder is called company_name
-            search_name = subfolder
+            # find search term for company in search term df
+            search_name = search_terms_companies[search_terms_companies.index == subfolder].search_term.item()
             
             # set up first part of search term (without dates)
             search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
