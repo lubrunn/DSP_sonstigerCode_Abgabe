@@ -41,18 +41,18 @@ get_Yahoo_update <- function(country) {
     proc.time() - p1 
   }
   
-  # load the file with all the symbols
+  # load the file with all the stock symbols from the respective index
   df_index <- read_csv(paste0(glue("{country}"),"/",glue("{country}"),"_Index_Components",".csv"))
-  #store symbols in dataframe
+  # store symbols in dataframe
   symbol = df_index$Symbol
   
   for (k in symbol){
-    
+    # load the data for one stock
     data <- read_csv(paste0(glue("{country}"),"/",glue("{country}"),"_",k,".csv")) # paste new path of respective directory
     
     # get the most recent date from the dataframe
     last_date <- gsub(",", "", data$Date[1], fixed = TRUE)
-    # prepare fo conversion to date
+    # prepare for conversion to date
     last_date <- gsub(" ", "", last_date, fixed = TRUE)
     # convert to date
     last_date <- as.Date(last_date, "%b %d %Y")
