@@ -96,8 +96,12 @@ info_df.iloc[7,:] = ["NoFilter_min_retweets_200_en", 200, "en", 40000]
 info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
 info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
 
+
+#%% read in search terms for companies
+search_terms_companies = pd.read_excel(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\twitter handles.xlsx")
 #%%
 folder = folders[0]
+search_term_dict = {}
 # scrape missing dates for each folder
 for folder in [k for k in folders if k in company_folders or k in nofilter_folders]:
     # check search terms from info_df
@@ -121,12 +125,18 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
             search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
             
             # go thru datelist and scrape once for each day
+            search_term_list = []
             for date in missing_dates_dic[subfolder]:
                 date1 = date.date()
                 date2 = (date - pd.Timedelta(days = 1)).date()
                 
                 search_term = f"{search_term1} unitl:{date1} since:{date2}"
-                print(search_term)
+                # add search terms to list
+                search_term_list.append(search_term)
+            # save search term list to dict
+            if folder == "Companies_de":
+                subfolder = f"{subfolder}_de"
+            search_term_dict[subfolder] = search_term_list
     elif folder in nofilter_folders:
         # setup first part of search term without dates
         search_term1 = f"min_retweets:{min_retweets} lang:{lang}"
@@ -135,8 +145,13 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
                 date1 = date.date()
                 date2 = (date - pd.Timedelta(days = 1)).date()
                 
-                search_term = f"{search_term1} unitl:{date1} since:{date2}"
-                print(search_term)
+                search_term = f"unitl:{date1} since:{date2}"
+                
+                # save to list
+                search_term_list.append(search_term)
+        # save search term list to dict
+        search_term_dict[folder] = search_term_list
+                
         
     
     
