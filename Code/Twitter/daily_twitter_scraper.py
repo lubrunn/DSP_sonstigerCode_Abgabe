@@ -4,22 +4,28 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
+
+
+#%%
+# all required dates
+today = datetime.today().strftime('%Y-%m-%d')
+dates_list_needed = pd.date_range(start="2018-12-01",end=today)
+
 #%%
 def date_missing_finder(files):
+    # only use json files
+    files = [k for k in files if ".json" in k]
+    
     # check what is the last date for which tweets were scraped
     
     # extract date from file names
     dates = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files]
     
     # convert to dates
-    dates_list = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
+    dates_list_have = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
     
-    # find last date
-    last_update = max(dates_list)
-    
-    # find dates between last scrape and today
-    today = datetime.today().strftime('%Y-%m-%d')
-    missing_dates = pd.date_range(start=last_update,end=today)
+    # find all missing dates
+    missing_dates = [k for k in date_list_needed if k not in dates_list]
     
     return missing_dates
 
