@@ -44,7 +44,7 @@ def date_missing_finder(files):
     
     # find all missing dates by checking difference between the dates we have 
     # and the dates that we should have (dates_list_needed)
-    missing_dates = [k for k in date_list_needed if k not in dates_list]
+    missing_dates = [k for k in date_list_needed if k not in dates_list_have]
     
     return missing_dates
 
@@ -62,8 +62,7 @@ company_folders = [k for k in folders if "Companies" in k]
 nofilter_folders = [k for k in folders if "NoFilter" in k]
 
 
-i = 0
-folder = folders[i]
+
 missing_dates_dic = {}
 
 for folder in folders:
@@ -174,8 +173,8 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
             # go thru datelist and scrape once for each day
             search_term_list = []
             for date in missing_dates_dic[subfolder]:
-                date1 = date.date()
-                date2 = (date - pd.Timedelta(days = 1)).date()
+                date1 = date
+                date2 = (date - pd.Timedelta(days = 1))
                 
                 search_term = f"{search_term1} unitl:{date1} since:{date2}"
                 # add search terms to list
@@ -188,11 +187,12 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # setup first part of search term without dates
         search_term1 = f"min_retweets:{min_retweets} lang:{lang}"
         # go thru datelist and scrape once for each day
+        search_term_list = []
         for date in missing_dates_dic[subfolder]:
-                date1 = date.date()
-                date2 = (date - pd.Timedelta(days = 1)).date()
+                date1 = date
+                date2 = (date - pd.Timedelta(days = 1))
                 
-                search_term = f"unitl:{date1} since:{date2}"
+                search_term = f"{search_term1} unitl:{date1} since:{date2}"
                 
                 # save to list
                 search_term_list.append(search_term)
