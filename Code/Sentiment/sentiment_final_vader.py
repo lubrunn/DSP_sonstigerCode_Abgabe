@@ -1,6 +1,6 @@
 def sentiment_over_time(retweet,lan,date_range_input,path_raw,subfolder):
     
-    import pyarrow.feather as feather  
+      
     import numpy as np
     import json
     import pandas as pd
