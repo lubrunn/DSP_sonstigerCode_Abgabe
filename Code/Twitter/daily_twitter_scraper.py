@@ -237,9 +237,10 @@ for key,value in search_term_dict_test.items():
         # set limit for number of tweets scraped per search
         config.Limit = limit
         
+        # extract date info from search term for saving
+        date2 = search_term.split("since:")[1]
         # define where to save output
-        config.Output = f'{company}/{company}_{date2}_{language}.json'
-        
+        # first for company folders
         if key not in nofilter_folders:
             # here check if german or english company folder
             country_code = key.split("_")[1]
@@ -247,6 +248,7 @@ for key,value in search_term_dict_test.items():
                                          key, key.split("_")[0] + "_" +
                                          str(date2) + "_" + 
                                          country_code + ".json")
+        # then for no filter folders
         else:
             config.Output = os.path.join(path, key,
                                          key + "_" + str(date2) + ".json")
