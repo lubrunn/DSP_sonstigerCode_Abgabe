@@ -4,14 +4,18 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-
+import nest_asyncio
+nest_asyncio.apply()
+import twint
 
 #%%
 # all required dates
 today = datetime.today().strftime('%Y-%m-%d')
-dates_list_needed = pd.date_range(start="2018-12-01",end=today)
+date_list_needed = pd.date_range(start="2018-12-01",end=today)
 
 #%%
+
+
 
 def date_missing_finder(files):
     '''
@@ -165,7 +169,7 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # for each company
         for subfolder in subfolders:
             # find search term for company in search term df
-            search_name = search_terms_companies[search_terms_companies.index == subfolder].search_term.item()
+            search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
             
             # set up first part of search term (without dates)
             search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
@@ -173,15 +177,17 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
             # go thru datelist and scrape once for each day
             search_term_list = []
             for date in missing_dates_dic[subfolder]:
-                date1 = date
-                date2 = (date - pd.Timedelta(days = 1))
+                date1 = date.date()
+                date2 = (date - pd.Timedelta(days = 1)).date()
                 
                 search_term = f"{search_term1} unitl:{date1} since:{date2}"
                 # add search terms to list
                 search_term_list.append(search_term)
             # save search term list to dict
-            if folder == "Companies_de":
-                subfolder = f"{subfolder}_de"
+            # if folder == "Companies_de":
+            #     subfolder = f"{subfolder}_de"
+            # elif folder == "Companies_en": 
+            #     subfolder = f"{subfolder}_en"
             search_term_dict[subfolder] = search_term_list
     elif folder in nofilter_folders:
         # setup first part of search term without dates
@@ -189,8 +195,8 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # go thru datelist and scrape once for each day
         search_term_list = []
         for date in missing_dates_dic[subfolder]:
-                date1 = date
-                date2 = (date - pd.Timedelta(days = 1))
+                date1 = date.date()
+                date2 = (date - pd.Timedelta(days = 1)).date()
                 
                 search_term = f"{search_term1} unitl:{date1} since:{date2}"
                 
@@ -202,4 +208,45 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         
     
     
-    
+#%% now run scraper for each row in dict for all search terms  
+# get smaller dict for testing
+import random
+search_term_dict_test = dict(random.sample(search_term_dict.items(), 2))
+
+for key,value in search_term_dict_test.items():
+    print(key)
+    #print(key, value)
+    # check if key (folder name) is not in nofilter folder --> company folder
+    if key not in nofilter_folders:
+        limit = 5000
+    else: # --> nofilter folder
+        limit = int(info_df.loc[info_df["folder"] == key, "limit"].values[0])
+        
+    search_dict = search_term_dict_test[key]
+    for search_term in search_dict:
+        # set up scraper
+        config = twint.Config() 
+        # search for search terms in dict
+        config.Search = search_term
+        # store results
+        config.Store_object = True 
+        
+        # store data as json
+        config.Store_json = True
+        
+        # set limit for number of tweets scraped per search
+        config.Limit = limit
+        
+        # define where to save output
+        config.Output = f'{company}/{company}_{date2}_{language}.json'
+        
+        if key not in nofilter_folders:
+            # here check if german or english company folder
+            country_code = key.split("_")[1]
+            config.Output = os.path.join(path,"Companies" + "_" + country_code,
+                                         key, key.split("_")[0] + "_" +
+                                         str(date2) + "_" + 
+                                         country_code + ".json")
+        else:
+            config.Output = os.path.join(path, key,
+                                         key + "_" + str(date2) + ".json")
