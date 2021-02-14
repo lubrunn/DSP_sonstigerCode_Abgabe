@@ -8,15 +8,41 @@ import nest_asyncio
 nest_asyncio.apply()
 import twint
 
-#%% set path
+#%% set path were all the data is
 path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw_test"
+
+# set path were company search term pkl is
+path_comp = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
 
 #%%
 # all required dates
 today = datetime.today().strftime('%Y-%m-%d')
 date_list_needed = pd.date_range(start="2018-11-30",end=today)
 
-#%%
+
+#%% 
+# create df that contains info for limit, search terms etc.
+info_df = pd.DataFrame(data = np.empty((10,4)),
+    columns = ["folder", "min_retweets", "lang", "limit"]) 
+
+# fill df
+info_df.iloc[0,:] = ["De_NoFilter", 0, "de", 20000]  
+info_df.iloc[1,:] = ["De_NoFilter_min_retweets_2", 2, "de", 40000]  
+info_df.iloc[2,:] = ["En_NoFilter", 0, "en", 20000]  
+info_df.iloc[3,:] = ["En_NoFilter_min_retweets_2", 2, "en", 20000]  
+info_df.iloc[4,:] = ["En_NoFilter_min_retweets_10", 10, "en", 20000]  
+info_df.iloc[5,:] = ["En_NoFilter_min_retweets_50", 50, "en", 20000]  
+info_df.iloc[6,:] = ["En_NoFilter_min_retweets_100", 100, "en",20000]  
+info_df.iloc[7,:] = ["En_NoFilter_min_retweets_200", 200, "en", 40000]  
+info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
+info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
+
+
+#%% read in search terms for companies
+search_terms_companies = pd.read_pickle(os.path.join(path_comp,"search_terms_companies.pkl"))
+
+
+#%% set up function to find out which dates still need to be scraped
 def date_missing_finder(files):
     '''
     
@@ -53,7 +79,7 @@ def date_missing_finder(files):
     return missing_dates
 
 #%%
-######### check last day that was scraped
+######### run missing_dates function over all folders
 
 
 # all folders 
@@ -107,27 +133,10 @@ for folder in folders:
         # save missing dates to folder name into dict
         missing_dates_dic[folder] = missing_dates
  
-#%% 
-# create df that contains info for limit, search terms etc.
-info_df = pd.DataFrame(data = np.empty((10,4)),
-    columns = ["folder", "min_retweets", "lang", "limit"]) 
-
-# fill df
-info_df.iloc[0,:] = ["De_NoFilter", 0, "de", 20000]  
-info_df.iloc[1,:] = ["De_NoFilter_min_retweets_2", 2, "de", 40000]  
-info_df.iloc[2,:] = ["En_NoFilter", 0, "en", 20000]  
-info_df.iloc[3,:] = ["En_NoFilter_min_retweets_2", 2, "en", 20000]  
-info_df.iloc[4,:] = ["En_NoFilter_min_retweets_10", 10, "en", 20000]  
-info_df.iloc[5,:] = ["En_NoFilter_min_retweets_50", 50, "en", 20000]  
-info_df.iloc[6,:] = ["En_NoFilter_min_retweets_100", 100, "en",20000]  
-info_df.iloc[7,:] = ["En_NoFilter_min_retweets_200", 200, "en", 40000]  
-info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
-info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
 
 
-#%% read in search terms for companies
-search_terms_companies = pd.read_pickle(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\search_terms_companies.pkl")
-#%% set up loop for twitter search
+
+#%% get dict with all search terms that need to be querried
 folder = folders[0]
 search_term_dict = {}
 # scrape missing dates for each folder
