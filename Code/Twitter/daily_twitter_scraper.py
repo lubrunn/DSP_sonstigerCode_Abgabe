@@ -8,15 +8,15 @@ import nest_asyncio
 nest_asyncio.apply()
 import twint
 
+#%% set path
+path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw_test"
+
 #%%
 # all required dates
 today = datetime.today().strftime('%Y-%m-%d')
-date_list_needed = pd.date_range(start="2018-12-01",end=today)
+date_list_needed = pd.date_range(start="2018-11-30",end=today)
 
 #%%
-
-
-
 def date_missing_finder(files):
     '''
     
@@ -52,12 +52,13 @@ def date_missing_finder(files):
     
     return missing_dates
 
-
+#%%
 ######### check last day that was scraped
-path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw"
+
 
 # all folders 
 folders = os.listdir(path)
+
 
 # folders for comapny scraping
 company_folders = [k for k in folders if "Companies" in k]
@@ -106,50 +107,27 @@ for folder in folders:
         # save missing dates to folder name into dict
         missing_dates_dic[folder] = missing_dates
  
-#%% scrape missing dates for each folder 
-
+#%% 
 # create df that contains info for limit, search terms etc.
 info_df = pd.DataFrame(data = np.empty((10,4)),
     columns = ["folder", "min_retweets", "lang", "limit"]) 
 
 # fill df
-info_df.iloc[0,:] = ["NoFilter_de", 0, "de", 20000]  
-info_df.iloc[1,:] = ["NoFilter_min_retweets_2_de", 2, "de", 40000]  
-info_df.iloc[2,:] = ["NoFilter_en", 0, "en", 20000]  
-info_df.iloc[3,:] = ["NoFilter_min_retweets_2_en", 2, "en", 20000]  
-info_df.iloc[4,:] = ["NoFilter_min_retweets_10_en", 10, "en", 20000]  
-info_df.iloc[5,:] = ["NoFilter_min_retweets_50_en", 50, "en", 20000]  
-info_df.iloc[6,:] = ["NoFilter_min_retweets_100_en", 100, "en",20000]  
-info_df.iloc[7,:] = ["NoFilter_min_retweets_200_en", 200, "en", 40000]  
+info_df.iloc[0,:] = ["De_NoFilter", 0, "de", 20000]  
+info_df.iloc[1,:] = ["De_NoFilter_min_retweets_2", 2, "de", 40000]  
+info_df.iloc[2,:] = ["En_NoFilter", 0, "en", 20000]  
+info_df.iloc[3,:] = ["En_NoFilter_min_retweets_2", 2, "en", 20000]  
+info_df.iloc[4,:] = ["En_NoFilter_min_retweets_10", 10, "en", 20000]  
+info_df.iloc[5,:] = ["En_NoFilter_min_retweets_50", 50, "en", 20000]  
+info_df.iloc[6,:] = ["En_NoFilter_min_retweets_100", 100, "en",20000]  
+info_df.iloc[7,:] = ["En_NoFilter_min_retweets_200", 200, "en", 40000]  
 info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
 info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
 
 
 #%% read in search terms for companies
-search_terms_companies = pd.read_excel(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\twitter handles.xlsx")
-
-# drop with rows are only NAs
-search_terms_companies = search_terms_companies[search_terms_companies["Company"].notna()]
-
-# company name as index
-search_terms_companies = search_terms_companies.set_index("Company", drop = False)
-
-# for each row join all non-nas to a search term separated with OR
-# set up new column
-search_terms_companies["search_term"] = None
-for i in range(0,len(search_terms_companies)):
-    
-    # get all twitter handles and merge them to one search term
-    terms = [k for k in search_terms_companies.iloc[i,:].tolist() if str(k) != "nan" and k != None]
-    search_term_comp = ' OR '.join(terms)
-    
-    # store in df
-    search_terms_companies.iloc[i,search_terms_companies.shape[1] - 1] = search_term_comp
-    
-    
-# only keep search term column
-search_terms_companies = search_terms_companies[["search_term"]]
-#%%
+search_terms_companies = pd.read_pickle(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\search_terms_companies.pkl")
+#%% set up loop for twitter search
 folder = folders[0]
 search_term_dict = {}
 # scrape missing dates for each folder
@@ -177,10 +155,11 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
             # go thru datelist and scrape once for each day
             search_term_list = []
             for date in missing_dates_dic[subfolder]:
-                date1 = date.date()
-                date2 = (date - pd.Timedelta(days = 1)).date()
                 
-                search_term = f"{search_term1} unitl:{date1} since:{date2}"
+                date1 = (date + pd.Timedelta(days = 1)).date()
+                date2 = date.date()
+                
+                search_term = f"{search_term1} until:{date1} since:{date2}"
                 # add search terms to list
                 search_term_list.append(search_term)
             # save search term list to dict
@@ -195,10 +174,10 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # go thru datelist and scrape once for each day
         search_term_list = []
         for date in missing_dates_dic[subfolder]:
-                date1 = date.date()
-                date2 = (date - pd.Timedelta(days = 1)).date()
+                date1 = (date + pd.Timedelta(days = 1)).date()
+                date2 = date.date()
                 
-                search_term = f"{search_term1} unitl:{date1} since:{date2}"
+                search_term = f"{search_term1} until:{date1} since:{date2}"
                 
                 # save to list
                 search_term_list.append(search_term)
@@ -210,10 +189,10 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
     
 #%% now run scraper for each row in dict for all search terms  
 # get smaller dict for testing
-import random
-search_term_dict_test = dict(random.sample(search_term_dict.items(), 2))
+#import random
+#search_term_dict_test = dict(random.sample(search_term_dict.items(), 2))
 
-for key,value in search_term_dict_test.items():
+for key,value in search_term_dict.items():
     print(key)
     #print(key, value)
     # check if key (folder name) is not in nofilter folder --> company folder
@@ -222,8 +201,9 @@ for key,value in search_term_dict_test.items():
     else: # --> nofilter folder
         limit = int(info_df.loc[info_df["folder"] == key, "limit"].values[0])
         
-    search_dict = search_term_dict_test[key]
+    search_dict = search_term_dict[key]
     for search_term in search_dict:
+        print(f"Working on {search_term}")
         # set up scraper
         config = twint.Config() 
         # search for search terms in dict
@@ -252,3 +232,7 @@ for key,value in search_term_dict_test.items():
         else:
             config.Output = os.path.join(path, key,
                                          key + "_" + str(date2) + ".json")
+            
+            
+        #run twitter search
+        twint.run.Search(config) 
