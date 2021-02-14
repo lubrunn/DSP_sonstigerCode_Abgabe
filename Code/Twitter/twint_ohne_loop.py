@@ -25,6 +25,7 @@ country = "Germany"
 #config.Search = f'"{search_term}" until:{date1} since:{date2} lang:{language}'
 #config.Search = f'min_retweets:2 until:{date1} since:{date2} lang:{language}'
 config.Search = "apple"
+config.Search = "min_retweets:0 lang:de until:2018-12-06 since:2018-12-05"
 config.Store_object = True 
 
 #create a folder for each country
@@ -50,6 +51,5 @@ print(f"The process took {round(time.time() - time1)} seconds")
 
 
 
-#%%
-df2 = pd.read_json("test2.json", lines = True)
+
 
