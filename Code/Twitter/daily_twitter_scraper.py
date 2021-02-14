@@ -9,7 +9,7 @@ nest_asyncio.apply()
 import twint
 
 #%% set path were all the data is
-path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw_test"
+path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw"
 
 # set path were company search term pkl is
 path_comp = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
