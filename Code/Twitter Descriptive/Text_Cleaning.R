@@ -56,7 +56,8 @@ rm(test_data_nof_1, test_data_nof_2,
    filename, test_data_nofilter, test_data_comp)
 
 # only one file
-#tweets_raw <- stream_in(file("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/NoFilter/En_NoFilter_2020-03-29.json"))
+ 
+tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2018-12-07.json)"))
 
 #a <- head(tweets_raw, 1000)
 
@@ -66,8 +67,8 @@ tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at,
                                 retweets_count, likes_count, retweet)
 
 # testing with single tweet
-tweets <- tweets[1,]
-tweets$text <- "Mr. Jones don't can't shouldn't haven't @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself"
+#tweets <- tweets[1,]
+#tweets$text <- "Mr. Jones don't can't shouldn't haven't @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
 
 
 tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
@@ -84,6 +85,9 @@ tweets$text <- qdapRegex::rm_twitter_url(tweets$text)
 
 
 ####### Texclean functions
+# replace special apostrophe with normal apostrophe (otherwise replace_contractions
+# does not work for these cases)
+tweets$text <- gsub("’", "'", tweets$text)
 #Mr. = Mister
 tweets$text <- replace_abbreviation(tweets$text)  
 # it's = it is
@@ -111,32 +115,34 @@ tweets$text <- replace_emoji_identifier(tweets$text)
 tweets$text <- replace_non_ascii(tweets$text) 
 #removes twitter handles
 tweets$text <- replace_tag(tweets$text) 
-
-tweets$text <- replace_rating(tweets$text) #0/10 becomes terrible, 5 stars becomes best
-
-tweets$text <- replace_url(tweets$text) #removes urls from text
-
-tweets$text <- replace_white(tweets$text) #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
+#0/10 becomes terrible, 5 stars becomes best
+tweets$text <- replace_rating(tweets$text) 
+#removes urls from text
+tweets$text <- replace_url(tweets$text) 
+#removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
+tweets$text <- replace_white(tweets$text) 
 ### convert all tweets to lower case
-
 tweets$text <- tolower(tweets$text)
-print(tweets[1,2])
 
 
-tweets$text <- add_comma_space(tweets$text) #adds space after comma so later one,two,three does not become onetwothree
-print("2")
-#remove twitter handles
-tweets$text <- gsub("@\\w+", "", tweets$text)
+#adds space after comma so later one,two,three does not become onetwothree
+tweets$text <- add_comma_space(tweets$text) 
 
-#remove special , note: this also removes emojis
-#tweets$tweet <- gsub("[^A-Za-z]", " ", tweets$tweet)
+# remove twitter handles
+# tweets$text <- gsub("@\\w+", "", tweets$text)
 
 # Get rid of hashtags
 tweets$text <- str_replace_all(tweets$text,"#[a-z,A-Z]*","")
+
+#remove special , note: this also removes emojis
+tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
+
+
 # Get rid of references to other screennames
 #tweets$tweet <- str_replace_all(tweets$tweet,"@[a-z,A-Z]*","") 
-#get rid of unnecessary spaces
-#tweets$text <- str_replace_all(tweets$text," "," ")
+
+#get rid of unnecessary white spaces
+tweets$text <- stringr::str_squish(tweets$text)
 
 ######### stemming
 stem_hunspell <- function(term) {
@@ -152,7 +158,38 @@ stem_hunspell <- function(term) {
   stem
 }
 tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
-tweets$text <- paste(unlist(tweets$text), collapse = " ")
+# add list to one string again
+tweets <-tweets %>% rowwise() %>% 
+  mutate(text = paste(text, collapse=' ')) %>%
+  ungroup()
+
+
+###### place column contains lists
+tweets <- unnest_wider(tweets, place) %>%
+  select(-c("...1", "type")) %>%
+  mutate_all(list(~na_if(.,"NULL"))) %>%
+  unnest_wider(coordinates) %>%
+  rename( "lat" = "...1", "long" = "...2" )
+
+
+
+
+
+
+
+
+
+#######################################
+#### save cleaned file
+######################################
+path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
+feather::write_feather(tweets, path)
+
+
+
+
+
+
 
 #set the schema:docs
 docs <- tm::DataframeSource(tweets)
