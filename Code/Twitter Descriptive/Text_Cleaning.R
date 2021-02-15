@@ -22,7 +22,41 @@ library(corpus)
 library(hunspell)
 
 #### read in data
-tweets_raw <- stream_in(file("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/NoFilter/En_NoFilter_2020-03-29.json"))
+setwd("C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/raw_test")
+filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-11-30.json"
+test_data_nof_1 <- jsonlite::stream_in(file(filename))
+filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-12-01.json"
+test_data_nof_2 <- jsonlite::stream_in(file(filename))
+
+test_data_nofilter <- rbind(test_data_nof_1, test_data_nof_2)
+test_data_nofilter$search_term <- ""
+
+filename <- "Companies_de/3M_de/3M_2018-11-30_de.json"
+test_data1 <- jsonlite::stream_in(file(filename))
+filename <- "Companies_de/3M_de/3M_2018-12-01_de.json"
+test_data2 <- jsonlite::stream_in(file(filename))
+filename <- "Companies_de/adidas_de/adidas_2018-11-30_de.json"
+test_data3 <- jsonlite::stream_in(file(filename))
+filename <- "Companies_de/adidas_de/adidas_2018-12-01_de.json"
+test_data4 <- jsonlite::stream_in(file(filename))
+
+# add search term column
+test_data1$search_term <- "3M"
+test_data2$search_term <- "3m"
+test_data3$search_term <- "adidas"
+test_data4$search_term <- "adidas"
+
+test_data_comp <- rbind(test_data1, test_data2, test_data3, test_data4)
+
+
+# add to df to one
+tweets_raw <- rbind(test_data_comp, test_data_nofilter)
+rm(test_data_nof_1, test_data_nof_2,
+   test_data1, test_data2, test_data3, test_data4,
+   filename, test_data_nofilter, test_data_comp)
+
+# only one file
+#tweets_raw <- stream_in(file("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/NoFilter/En_NoFilter_2020-03-29.json"))
 
 #a <- head(tweets_raw, 1000)
 
