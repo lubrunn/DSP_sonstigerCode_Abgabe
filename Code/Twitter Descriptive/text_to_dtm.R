@@ -1,3 +1,10 @@
+######## read in cleaned data
+path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
+tweets <- feather::read_feather(path)
+
+
+
+
 #set the schema:docs
 docs <- tm::DataframeSource(tweets)
 
@@ -20,6 +27,9 @@ clean_corpus <- function(corpus){
 }
 
 text_corpus <- clean_corpus(VCorpus(docs))
+
+
+
 
 
 
