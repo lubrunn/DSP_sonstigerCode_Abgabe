@@ -61,45 +61,66 @@ rm(test_data_nof_1, test_data_nof_2,
 #a <- head(tweets_raw, 1000)
 
 # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
-tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, date,
-                                replies_count, retweets_count, 
-                                likes_count, retweet)
+tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at, 
+                                user_id, place, language, replies_count, 
+                                retweets_count, likes_count, retweet)
 
+# testing with single tweet
 tweets <- tweets[1,]
-tweets$text <- "Mr. Jones @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself
-"
+tweets$text <- "Mr. Jones don't can't shouldn't haven't @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself"
 
 
 tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
 
+
 ### convert all tweets to lower case
 tweets$text <- tolower(tweets$text)
+
 
 #a <- head(tweets, 1000)
 #remove urls
 tweets$text <- qdapRegex::rm_twitter_url(tweets$text)
 
 
-####### Texclean functions
-print("1")
-tweets$text <- replace_abbreviation(tweets$text)  #Mr. = Mister
-tweets$text <- replace_contraction(tweets$text) # it's = it is
 
-tweets$text <- replace_word_elongation(tweets$text) #noooooooooooo becomes no
-tweets$text <- replace_email(tweets$text) #remove email adresses
-tweets$text <- replace_emoticon(tweets$text) #replaces emoticons
-tweets$text <- replace_html(tweets$text) #removes html markup: &euro becomes euro
-tweets$text <- replace_grade(tweets$text) # C+ becomes slighlty above average
-tweets$text <- replace_internet_slang(tweets$text) #lol = laughing out loud
-tweets$text <- replace_emoji(tweets$text) #replaces emojis with text representations
-tweets$text <- replace_emoji_identifier(tweets$text) #replaces with a unique identifier that corresponds to lexicon::hash_sentiment_emoji
-tweets$text <- replace_non_ascii(tweets$text) #removes chracter strings with non-ASCII chracters
-tweets$text <- replace_tag(tweets$text) #removes twitter handles
+####### Texclean functions
+#Mr. = Mister
+tweets$text <- replace_abbreviation(tweets$text)  
+# it's = it is
+tweets$text <- replace_contraction(tweets$text) 
+
+# replace haven't because replace_contractions does not
+tweets$text <- gsub("haven't", "have not", tweets$text)
+#noooooooooooo becomes no
+tweets$text <- replace_word_elongation(tweets$text) 
+#remove email adresses
+tweets$text <- replace_email(tweets$text) 
+#replaces emoticons
+tweets$text <- replace_emoticon(tweets$text) 
+#removes html markup: &euro becomes euro
+tweets$text <- replace_html(tweets$text) 
+# C+ becomes slighlty above average
+tweets$text <- replace_grade(tweets$text) 
+#lol = laughing out loud
+tweets$text <- replace_internet_slang(tweets$text) 
+#replaces emojis with text representations
+tweets$text <- replace_emoji(tweets$text) 
+#replaces with a unique identifier that corresponds to lexicon::hash_sentiment_emoji
+tweets$text <- replace_emoji_identifier(tweets$text) 
+#removes chracter strings with non-ASCII chracters
+tweets$text <- replace_non_ascii(tweets$text) 
+#removes twitter handles
+tweets$text <- replace_tag(tweets$text) 
+
 tweets$text <- replace_rating(tweets$text) #0/10 becomes terrible, 5 stars becomes best
+
 tweets$text <- replace_url(tweets$text) #removes urls from text
+
 tweets$text <- replace_white(tweets$text) #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
 ### convert all tweets to lower case
+
 tweets$text <- tolower(tweets$text)
+print(tweets[1,2])
 
 
 tweets$text <- add_comma_space(tweets$text) #adds space after comma so later one,two,three does not become onetwothree
