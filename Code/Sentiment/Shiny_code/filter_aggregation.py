@@ -1,11 +1,12 @@
-def filter_aggregation(df,lan,long_tweet,filt_retweet,filt_likes,median_len,ticker):
-     
-    import pyarrow.feather as feather
+def filter_aggregation(df,lan,filt_len,filt_ret,filt_lik,median_len,ticker):
+    
+    import functools
+    import operator
     import numpy as np
     import pandas as pd
     
     # specify condition as boolean condition to speed up evaluation
-    if long_tweet == "yes":
+    if filt_len == "yes":
         condition = (df.retweets_count > filt_ret) & (df.likes_count > filt_lik) & (df.tweet_length > median_len)
     else:
         condition = (df.retweets_count > filt_ret) & (df.likes_count > filt_lik)         
@@ -22,46 +23,61 @@ def filter_aggregation(df,lan,long_tweet,filt_retweet,filt_likes,median_len,tick
     all_dates = df['date'].unique()
     
     #calculate median once    
-           
+    # slow: look for alternatives      
     mean_sentiment_by_retweet = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
                                                    weights = df['retweets_count'].loc[df.date == i])) for i in all_dates] 
-        
-    # account for tweets with 0 retweets -> just mean
-   # if mean_sentiment_by_retweet == "nan":
-   #        mean_sentiment_by_retweet =  df["sentiment"].mean()
+ 
+    
+    #result =  df.groupby(['date']).apply(lambda x: np.ma.average(df['sentiment'], weights=df['retweets_count']))
+
+    
+    # flatten tuple and remove date
+    mean_sentiment_by_retweet = functools.reduce(operator.iconcat, mean_sentiment_by_retweet, [])
+    mean_sentiment_by_retweet = pd.Series(mean_sentiment_by_retweet[1::2])
+    
            
     # weight the sentiments by their length
-    mean_sentiment_by_length = np.average(df['sentiment'], 
-                                              weights = df['tweet_length'])           
-        
+    mean_sentiment_by_length = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
+                                                   weights = df['tweet_length'].loc[df.date == i])) for i in all_dates] 
+    # flatten tuple and remove date
+    mean_sentiment_by_length = functools.reduce(operator.iconcat, mean_sentiment_by_length, [])
+    mean_sentiment_by_length = pd.Series(mean_sentiment_by_length[1::2])    
+    
     # weight the sentiments by their number of likes  
-    mean_sentiment_by_likes = np.ma.average(df['sentiment'], 
-                                              weights = df['likes_count'])
+    mean_sentiment_by_likes = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
+                                                   weights = df['likes_count'].loc[df.date == i])) for i in all_dates]
         
-    # account for tweets with 0 retweets -> just mean
-    #if mean_sentiment_by_likes == "nan":
-    #       mean_sentiment_by_likes =  df["sentiment"].mean()
+    # flatten tuple and remove date
+    mean_sentiment_by_likes = functools.reduce(operator.iconcat, mean_sentiment_by_likes, [])
+    mean_sentiment_by_likes = pd.Series(mean_sentiment_by_likes[1::2])    
+
 
     # just mean
-    mean_sentiment = df["sentiment"].mean()
-            
-        
-        
-    final = pd.DataFrame([{'date':df["date"].iloc[1],
+    mean_sentiment  = [(i, df['sentiment'].loc[df.date == i].mean()) for i in all_dates]
+    
+    # flatten tuple and remove date
+    mean_sentiment = functools.reduce(operator.iconcat, mean_sentiment, [])
+    mean_sentiment = pd.Series(mean_sentiment[1::2])    
+
+    print(f"{lan}_NoFilter_{filt_ret}_{filt_lik}_{filt_len}")
+    
+    filt_ret = pd.Series(np.repeat(filt_ret, len(mean_sentiment), axis=0))   
+    filt_lik = pd.Series(np.repeat(filt_lik, len(mean_sentiment), axis=0))   
+    filt_len = pd.Series(np.repeat(filt_len, len(mean_sentiment), axis=0))   
+    
+    all_dates = pd.Series(all_dates)
+    
+    final = pd.DataFrame({'date':all_dates,
                               'sentiment_mean':mean_sentiment,
                               'sentiment_weight_retweet':mean_sentiment_by_retweet,
                               'sentiment_weight_length':mean_sentiment_by_length,
                               'sentiment_weight_likes':mean_sentiment_by_likes,
-                              'retweet_filter':filt_retweet,
-                              'likes_filter':filt_likes,
-                              'long_tweet':long_tweet}])
-        
-        
-        
+                              'retweet_filter':filt_ret,
+                              'likes_filter':filt_lik,
+                              'long_tweet':filt_len})
+  
+    
     final.to_csv(f"C://Users//simon//OneDrive - UT Cloud//Eigene Dateien//Data//Twitter//sentiment//Simon_test//{lan}_NoFilter_{ticker}.csv",mode = "a", 
                      index=False,header= False)    
-    #feather.write_feather(final, 
-    #                      r"...{lan}_NoFilter_{filt_retweet}_{filt_likes}_{long_tweet}.feather") 
-
-    print(f"{lan}_NoFilter_{filt_retweet}_{filt_likes}_{long_tweet}")
+  
         
