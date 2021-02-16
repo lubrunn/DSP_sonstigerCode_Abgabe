@@ -25,7 +25,7 @@ df = df.drop_duplicates(subset=['id'])
 #median tweet length
 median_len = np.median(df.tweet_length)
 
-filt_likes = np.arange(0,300).tolist()
+filt_likes = np.arange(0,10).tolist()
 long_tweet = list(["yes","no"])
 
 
