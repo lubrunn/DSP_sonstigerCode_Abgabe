@@ -24,40 +24,50 @@ def filter_aggregation(df,lan,filt_len,filt_ret,filt_lik,median_len,ticker):
     
     #calculate median once    
     # slow: look for alternatives      
-    mean_sentiment_by_retweet = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
-                                                   weights = df['retweets_count'].loc[df.date == i])) for i in all_dates] 
+   # mean_sentiment_by_retweet = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
+   #                                                weights = df['retweets_count'].loc[df.date == i])) for i in all_dates] 
  
     
-    #result =  df.groupby(['date']).apply(lambda x: np.ma.average(df['sentiment'], weights=df['retweets_count']))
+    # much faster
+    mean_sentiment_by_retweet =  df.groupby(['date']).apply(lambda x: np.ma.average(x['sentiment'], weights=x['retweets_count']))
 
     
     # flatten tuple and remove date
-    mean_sentiment_by_retweet = functools.reduce(operator.iconcat, mean_sentiment_by_retweet, [])
-    mean_sentiment_by_retweet = pd.Series(mean_sentiment_by_retweet[1::2])
+    #mean_sentiment_by_retweet = functools.reduce(operator.iconcat, mean_sentiment_by_retweet, [])
+    #mean_sentiment_by_retweet = pd.Series(mean_sentiment_by_retweet[1::2])
     
            
     # weight the sentiments by their length
-    mean_sentiment_by_length = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
-                                                   weights = df['tweet_length'].loc[df.date == i])) for i in all_dates] 
+    #mean_sentiment_by_length = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
+    #                                               weights = df['tweet_length'].loc[df.date == i])) for i in all_dates] 
+    
+    mean_sentiment_by_length =  df.groupby(['date']).apply(lambda x: np.ma.average(x['sentiment'], weights=x['tweet_length']))
+
+    
     # flatten tuple and remove date
-    mean_sentiment_by_length = functools.reduce(operator.iconcat, mean_sentiment_by_length, [])
-    mean_sentiment_by_length = pd.Series(mean_sentiment_by_length[1::2])    
+    #mean_sentiment_by_length = functools.reduce(operator.iconcat, mean_sentiment_by_length, [])
+    #mean_sentiment_by_length = pd.Series(mean_sentiment_by_length[1::2])    
     
     # weight the sentiments by their number of likes  
-    mean_sentiment_by_likes = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
-                                                   weights = df['likes_count'].loc[df.date == i])) for i in all_dates]
+    #mean_sentiment_by_likes = [(i, np.ma.average(df['sentiment'].loc[df.date == i],
+    #                                               weights = df['likes_count'].loc[df.date == i])) for i in all_dates]
         
+    mean_sentiment_by_likes =  df.groupby(['date']).apply(lambda x: np.ma.average(x['sentiment'], weights=x['likes_count']))
+
+    
     # flatten tuple and remove date
-    mean_sentiment_by_likes = functools.reduce(operator.iconcat, mean_sentiment_by_likes, [])
-    mean_sentiment_by_likes = pd.Series(mean_sentiment_by_likes[1::2])    
+    #mean_sentiment_by_likes = functools.reduce(operator.iconcat, mean_sentiment_by_likes, [])
+    #mean_sentiment_by_likes = pd.Series(mean_sentiment_by_likes[1::2])    
 
 
     # just mean
-    mean_sentiment  = [(i, df['sentiment'].loc[df.date == i].mean()) for i in all_dates]
+   # mean_sentiment  = [(i, df['sentiment'].loc[df.date == i].mean()) for i in all_dates]
     
+    mean_sentiment =  df.groupby(['date']).apply(lambda x: x['sentiment'].mean())
+
     # flatten tuple and remove date
-    mean_sentiment = functools.reduce(operator.iconcat, mean_sentiment, [])
-    mean_sentiment = pd.Series(mean_sentiment[1::2])    
+   # mean_sentiment = functools.reduce(operator.iconcat, mean_sentiment, [])
+    #mean_sentiment = pd.Series(mean_sentiment[1::2])    
 
     print(f"{lan}_NoFilter_{filt_ret}_{filt_lik}_{filt_len}")
     
@@ -66,6 +76,10 @@ def filter_aggregation(df,lan,filt_len,filt_ret,filt_lik,median_len,ticker):
     filt_len = pd.Series(np.repeat(filt_len, len(mean_sentiment), axis=0))   
     
     all_dates = pd.Series(all_dates)
+    mean_sentiment = mean_sentiment.reset_index().drop('index',axis=1)
+    mean_sentiment_by_likes = mean_sentiment_by_likes.reset_index().drop('index',axis=1)
+    mean_sentiment_by_length = mean_sentiment_by_length.reset_index().drop('index',axis=1)
+    mean_sentiment_by_retweet = mean_sentiment_by_retweet.reset_index().drop('index',axis=1)
     
     final = pd.DataFrame({'date':all_dates,
                               'sentiment_mean':mean_sentiment,
