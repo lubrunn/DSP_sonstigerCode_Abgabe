@@ -1,16 +1,14 @@
-def sentiment_over_time(retweet,lan,date_range_input,path_raw,subfolder):
-    
-      
-    import numpy as np
-    import json
-    import pandas as pd
+def sentiment_over_time(retweet,lan,date_range_input,path_raw,long_tweet,filt_retweet,filt_likes):
+     
     import re
+    import pandas as pd
+    import json
+    import numpy as np
     import nltk
     nltk.download('vader_lexicon')
-    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer 
-        
-        
-    
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+    import swifter   # optimize apply function (similar performance to vectorized ops.)
+       
     # remove basic signs, which distort sentiment
     def remove_light(text):
            reference_pattern = re.compile(r"\@\w+|\@\w+\'|\@\w+\’|<.*?>|https?://\S+|www\.\S+|\d+\.|\d+|\#|\&amp|RT")
@@ -52,43 +50,53 @@ def sentiment_over_time(retweet,lan,date_range_input,path_raw,subfolder):
      #   else:
      #              path = f'{path_raw}\\{subfolder}_{date}_{lan}.json'
                    
-         
+        path = f"C:\\Users\\simon\\Desktop\\WS_20_21\\DS_12\\Sentiment\\test\\En_NoFilter_min_retweets_200_2018-11-30.json"
+        
         #load json file
         for line in open(path, 'r',encoding="utf8"):
             tweets.append(json.loads(line))
            
         
-        
-        
         # create dataframe from list
         df = pd.DataFrame(tweets)
         
-        # drop duplicate tweets
-        df = df.drop_duplicates(subset=['id'])
-        
-        # create copy of the tweet column for comparison
-        df["tweet_clean"] = df["tweet"].copy()
+        if len(df) == 0:
+            continue
         
         # subset dataframe for columns of interest
-        tweet = df[["id","date","tweet", "tweet_clean","replies_count","retweets_count",
-                       "likes_count","retweet"]]
-           
+        tweet = df[["id","date","tweet","retweets_count",
+                       "likes_count"]]
+        
+        del df
+        
+        # drop duplicates
+        # load list of IDs which have a duplicte
+        
+        
+                   
         # call the cleaning functions
-        tweet["tweet_clean"] = tweet["tweet"].apply(lambda tweet: remove_light(tweet))
-        tweet["tweet_clean"] = tweet["tweet_clean"].apply(lambda tweet_clean: remove_repeats(tweet_clean))
+        tweet["tweet"] = tweet["tweet"].swifter.apply(lambda tweet: remove_light(tweet))
+        tweet["tweet"] = tweet["tweet"].swifter.apply(lambda tweet_clean: remove_repeats(tweet_clean))
            
            
         # get the length of each tweet for calculation 
         # use vectorize function of numpy 
         length_checker = np.vectorize(len)
         # get length of each tweet
-        tweet["tweet_length"] = length_checker(tweet["tweet_clean"])
-           
-        print("Calculate sentiment for day", date,"with language",
-                 lan,"and retweet count of",retweet)
-           
+        tweet["tweet_length"] = length_checker(tweet["tweet"])   
+
+        # filter methods
+       # filt_retweet = 
+        tweet = tweet.loc[tweet.retweets_count > filt_retweet]
+        
+        tweet = tweet.loc[tweet.likes_count > filt_likes]
+        
+        if long_tweet = "yes": 
+            tweet = tweet.loc[tweet.tweet_length > np.median(tweet.tweet_length)]
+
+        
         # calculate the sentiment for each tweet by calling the function 'get_sentiment()'
-        tweet["sentiment"] = tweet["tweet_clean"].apply(lambda tweet_clean: get_sentiment(tweet_clean))
+        tweet["sentiment"] = tweet["tweet"].swifter.apply(lambda tweet_clean: get_sentiment(tweet_clean))
            
         # weight the sentiments by their number of retweets  
         mean_sentiment_by_retweet = np.ma.average(tweet['sentiment'], 
@@ -113,6 +121,14 @@ def sentiment_over_time(retweet,lan,date_range_input,path_raw,subfolder):
         # just mean
         mean_sentiment = tweet["sentiment"].mean()
             
+        
+        
+        
+        
+        
+        
+        
+        
         # store all vectors in dataframe
         final = pd.DataFrame([{'id':tweet["id"],
                               'date':tweet["date"].iloc[1],
@@ -121,6 +137,10 @@ def sentiment_over_time(retweet,lan,date_range_input,path_raw,subfolder):
                               'sentiment_weight_length':mean_sentiment_by_length,
                               'sentiment_weight_likes':mean_sentiment_by_likes}])
         
+        
+        
+        
+        feather.write_feather(df_final, r"C:\Users\simon\Desktop\WS_20_21\DS_12\test_feather.feather") 
 
         # append one row dataframe to csv to save memory
         final.to_csv(r"C:\Users\simon\Desktop\WS_20_21\DS_12\test.csv",mode = "a", 
