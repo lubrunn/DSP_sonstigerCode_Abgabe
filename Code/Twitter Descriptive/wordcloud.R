@@ -11,7 +11,7 @@ wordcloud(word_freqs$term, word_freqs$num,
 
 
 #### different wordcloud
-devtools::install_github("lchiffon/wordcloud2")
+# devtools::install_github("lchiffon/wordcloud2")
 
 
 library(wordcloud2)
