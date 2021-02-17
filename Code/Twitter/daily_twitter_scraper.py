@@ -7,6 +7,7 @@ import pandas as pd
 import nest_asyncio
 nest_asyncio.apply()
 import twint
+import time
 
 #%% set path were all the data is
 path = "/home/lukasbrunner/share/onedrive/Data/Twitter/raw"
@@ -251,11 +252,11 @@ for key,value in search_term_dict.items():
                 config.Hide_output = True
                 #run twitter search
                 twint.run.Search(config) 
-            except:
-                  error_sleep = 60
-                  print(f"Encountered problem going to {error_sleep} seconds to sleep and will then retry.")
-                  time.sleep(60)
-            continue
+        except:
+              error_sleep = 60
+              print(f"Encountered problem going to {error_sleep} seconds to sleep and will then retry.")
+              time.sleep(60)
+              continue
         else:
             break
     else:
