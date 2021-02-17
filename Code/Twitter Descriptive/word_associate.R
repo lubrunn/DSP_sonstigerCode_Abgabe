@@ -11,3 +11,18 @@ word_associate(text,
                cloud.colors = c("gray85", "darkred"))
 title(main = "Covid-19 Tweet Associations")
 
+
+
+library(networkD3)
+
+# Create fake data
+src <- c("A", "A", "A", "A", "B", "B", "C", "C", "D")
+target <- c("B", "C", "D", "J", "E", "F", "G", "H", "I")
+networkData <- data.frame(src, target)
+
+# Plot
+simpleNetwork(networkData)
+
+
+dtm_df <- data.frame(dtm_m)
+simpleNetwork(dtm_df)
