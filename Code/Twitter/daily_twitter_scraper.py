@@ -197,7 +197,7 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         search_term1 = f"min_retweets:{min_retweets} lang:{lang}"
         # go thru datelist and scrape once for each day
         search_term_list = []
-        for date in missing_dates_dic[subfolder]:
+        for date in missing_dates_dic[folder]:
                 date1 = (date + pd.Timedelta(days = 1)).date()
                 date2 = date.date()
                 
