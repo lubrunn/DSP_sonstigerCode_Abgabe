@@ -9,10 +9,10 @@ nest_asyncio.apply()
 import twint
 
 #%% set path were all the data is
-path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw"
+path = "/home/lukasbrunner/share/onedrive/Data/Twitter/raw"
 
 # set path were company search term pkl is
-path_comp = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
+path_comp = "/home/lukasbrunner/share/onedrive/Data/Twitter"
 
 #%%
 # all required dates
@@ -205,46 +205,58 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
 #search_term_dict_test = dict(random.sample(search_term_dict.items(), 2))
 
 for key,value in search_term_dict.items():
-    print(key)
-    #print(key, value)
-    # check if key (folder name) is not in nofilter folder --> company folder
-    if key not in nofilter_folders:
-        limit = 5000
-    else: # --> nofilter folder
-        limit = int(info_df.loc[info_df["folder"] == key, "limit"].values[0])
-        
-    search_dict = search_term_dict[key]
-    for search_term in search_dict:
-        print(f"Working on {search_term}")
-        # set up scraper
-        config = twint.Config() 
-        # search for search terms in dict
-        config.Search = search_term
-        # store results
-        config.Store_object = True 
-        
-        # store data as json
-        config.Store_json = True
-        
-        # set limit for number of tweets scraped per search
-        config.Limit = limit
-        
-        # extract date info from search term for saving
-        date2 = search_term.split("since:")[1]
-        # define where to save output
-        # first for company folders
-        if key not in nofilter_folders:
-            # here check if german or english company folder
-            country_code = key.split("_")[1]
-            config.Output = os.path.join(path,"Companies" + "_" + country_code,
-                                         key, key.split("_")[0] + "_" +
-                                         str(date2) + "_" + 
-                                         country_code + ".json")
-        # then for no filter folders
+    # retry 10 times in case of html token error
+    for attempt in range(10):
+        try:
+            print(key)
+            #print(key, value)
+            # check if key (folder name) is not in nofilter folder --> company folder
+            if key not in nofilter_folders:
+                limit = 5000
+            else: # --> nofilter folder
+                limit = int(info_df.loc[info_df["folder"] == key, "limit"].values[0])
+                
+            search_dict = search_term_dict[key]
+            for search_term in search_dict:
+                print(f"Working on {search_term}")
+                # set up scraper
+                config = twint.Config() 
+                # search for search terms in dict
+                config.Search = search_term
+                # store results
+                config.Store_object = True 
+                
+                # store data as json
+                config.Store_json = True
+                
+                # set limit for number of tweets scraped per search
+                config.Limit = limit
+                
+                # extract date info from search term for saving
+                date2 = search_term.split("since:")[1]
+                # define where to save output
+                # first for company folders
+                if key not in nofilter_folders:
+                    # here check if german or english company folder
+                    country_code = key.split("_")[1]
+                    config.Output = os.path.join(path,"Companies" + "_" + country_code,
+                                                 key, key.split("_")[0] + "_" +
+                                                 str(date2) + "_" + 
+                                                 country_code + ".json")
+                # then for no filter folders
+                else:
+                    config.Output = os.path.join(path, key,
+                                                 key + "_" + str(date2) + ".json")
+                # dont show tweets being scraped in console    
+                config.Hide_output = True
+                #run twitter search
+                twint.run.Search(config) 
+            except:
+                  error_sleep = 60
+                  print(f"Encountered problem going to {error_sleep} seconds to sleep and will then retry.")
+                  time.sleep(60)
+            continue
         else:
-            config.Output = os.path.join(path, key,
-                                         key + "_" + str(date2) + ".json")
-        # dont show tweets being scraped in console    
-        config.Hide_output = True
-        #run twitter search
-        twint.run.Search(config) 
+            break
+    else:
+        print("Too many errors")
