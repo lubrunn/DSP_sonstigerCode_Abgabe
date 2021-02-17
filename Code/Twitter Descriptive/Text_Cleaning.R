@@ -6,7 +6,7 @@ library(tidyverse)
 library(jsonlite)
 
 
-library(tm)
+
 
 library(tidytext)
 
@@ -18,7 +18,7 @@ library(qdap)
 
 library(textclean)
 
-library(corpus)
+
 library(hunspell)
 
 #### read in data
@@ -68,7 +68,7 @@ tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at,
 
 # testing with single tweet
 #tweets <- tweets[1,]
-tweets$text <- "Mr. Jones &amp; Jones don't can't shouldn't haven't @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
+tweets$text <- "Mr. Jones &amp; Jones Jones don't don't can't shouldn't haven't @twitter_user123 it's so soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
 
 ###
 tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
@@ -158,6 +158,15 @@ stem_hunspell <- function(term) {
   stem
 }
 tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
+
+string_list <- 
+x <- scan(what = character(), text = "a a a b c c d e a a b b b e e d d d w  ad wad a   wdad wa fe feafa afwa fafw")
+# function that removes consecutive duplicates
+dup_remover <- function(string){
+  x <- scan(what = character(), text = string)
+  paste(rle(x)$values, collapse = " ")
+  return(string)
+  }
 # collapse text column list to one string again
 tweets <-tweets %>% rowwise() %>% 
   mutate(text = paste(text, collapse=' ')) %>%
