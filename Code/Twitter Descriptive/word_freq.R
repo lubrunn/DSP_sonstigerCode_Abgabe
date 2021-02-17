@@ -10,4 +10,12 @@ barplot(term_frequency[1:10],
         col = "white",
         main = "Word Frequencies")
 
+word_count <- data.frame("n" = term_frequency) %>% rownames_to_column("word")
+word_count %>%
+  top_n(10) %>% 
+  arrange(desc(n)) %>%
+ggplot(aes(x = word, y = n)) +
+  geom_col() +
+  coord_flip()
+
 
