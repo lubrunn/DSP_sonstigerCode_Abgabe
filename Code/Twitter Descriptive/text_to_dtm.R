@@ -1,5 +1,14 @@
+library(corpus)
+library(tidyverse)
+library(tm)
+
 ######## read in cleaned data
+
+
+
 # path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
+
+
 # tweets_f1 <- feather::read_feather(path)
 # 
 # 
