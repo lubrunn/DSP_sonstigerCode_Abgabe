@@ -207,9 +207,11 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
 
 for key,value in search_term_dict.items():
     # retry 10 times in case of html token error
+    print(f"Started working on {key}")
     for attempt in range(10):
+        
         try:
-            print(key)
+            print(f"Attempt: {attempt})")
             #print(key, value)
             # check if key (folder name) is not in nofilter folder --> company folder
             if key not in nofilter_folders:
@@ -219,7 +221,7 @@ for key,value in search_term_dict.items():
                 
             search_dict = search_term_dict[key]
             for search_term in search_dict:
-                print(f"Working on {search_term}")
+                print(f"Scraping tweets for search term: {search_term}")
                 # set up scraper
                 config = twint.Config() 
                 # search for search terms in dict
@@ -258,6 +260,7 @@ for key,value in search_term_dict.items():
               time.sleep(60)
               continue
         else:
+            print("Breaking after too many fails.")
             break
     else:
         print("Too many errors")
