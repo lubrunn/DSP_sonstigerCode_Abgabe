@@ -1,8 +1,14 @@
 ######## read in cleaned data
-path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
-tweets <- feather::read_feather(path)
+# path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
+# tweets_f1 <- feather::read_feather(path)
+# 
+# 
+# path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
+# tweets_f2 <- arrow::read_feather(path1)
 
-
+# parquet file
+path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned3.parquet"
+tweets <- arrow::read_parquet(path2)
 
 
 #set the schema:docs
@@ -12,21 +18,19 @@ docs <- tm::DataframeSource(tweets)
 
 
 #clean_corpus function from datacamp
-clean_corpus <- function(corpus){
-        #corpus <- tm_map(corpus,  content_transformer(replace_abbreviation))
-        corpus <- tm_map(corpus, removePunctuation)
-        
-        corpus <- tm_map(corpus, removeNumbers)
-        corpus <- tm_map(corpus,
-                         content_transformer(tolower))
-        corpus <- tm_map(corpus, removeWords,
-                         c(stopwords("SMART"), "amp"))
-        corpus <- tm_map(corpus, stripWhitespace)
-        corpus <- tm_map(corpus,  content_transformer(replace_abbreviation))
-        return(corpus)
-}
+# no need already cleaned previously
+# clean_corpus <- function(corpus){
+#         
+#         
+#         corpus <- tm_map(corpus, removeNumbers)
+#         
+#         corpus <- tm_map(corpus, removeWords,
+#                          c(stopwords("SMART"), "amp"))
+#         
+#         return(corpus)
+# }
 
-text_corpus <- clean_corpus(VCorpus(docs))
+text_corpus <- VCorpus(docs)
 
 
 
@@ -48,4 +52,12 @@ dtm_m <- as.matrix(dtm)
 #check matrix
 dtm_m[1,]
 
-rm(docs, dtm, text_corpus, tweets_raw, clean_corpus)
+
+
+###########################################
+## filter on meta data e.g. retweets_count
+###########################################
+meta_data <- meta(text_corpus)
+
+# only keep values in dtm where retweets_count > 2
+dtm_m_filt <- dtm_m[meta_data$retweets_count > 1,]
