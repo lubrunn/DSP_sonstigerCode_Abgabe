@@ -25,7 +25,7 @@ country = "Germany"
 #config.Search = f'"{search_term}" until:{date1} since:{date2} lang:{language}'
 #config.Search = f'min_retweets:2 until:{date1} since:{date2} lang:{language}'
 config.Search = "apple"
-config.Search = "min_retweets:0 lang:de until:2018-12-06 since:2018-12-05"
+config.Search = "JohnsonJohnson OR @JNJNews OR @JNJGlobalHealth min_retweets:0 lang:en until:2021-02-17 since:2021-02-16"
 config.Store_object = True 
 
 #create a folder for each country
@@ -41,8 +41,9 @@ config.Limit = 100
 #config.Output = f'{country}/{country}_{date2}.csv'
 #config.Output = f'{search_term}/{search_term}_{date2}.csv'
 config.Store_json = True
-config.Output = f"apple_test.json"
+config.Output = f"test.json"
 #config.Output = f'{search_term}/{search_term}_{date2}.json'
+config.Hide_output = True
 twint.run.Search(config) 
 #search_list = config.search_tweet_list
 
@@ -50,6 +51,6 @@ print(f"The process took {round(time.time() - time1)} seconds")
 
 
 
-
+#%% read in results
 
 
