@@ -156,8 +156,11 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # for each company
         for subfolder in subfolders:
             # find search term for company in search term df
-            search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
-            
+            if "Johnson" in subfolder:
+                search_name = search_terms_companies[search_terms_companies.index.str.split(" ").str[0] == subfolder.split("_")[0].split(" ")[0]].search_term.item()
+            else:
+                search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
+
             # set up first part of search term (without dates)
             search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
             
@@ -241,7 +244,7 @@ for key,value in search_term_dict.items():
         else:
             config.Output = os.path.join(path, key,
                                          key + "_" + str(date2) + ".json")
-            
-            
+        # dont show tweets being scraped in console    
+        config.Hide_output = True
         #run twitter search
         twint.run.Search(config) 
