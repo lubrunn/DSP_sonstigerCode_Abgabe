@@ -16,7 +16,7 @@ library(tm)
 # tweets_f2 <- arrow::read_feather(path1)
 
 # parquet file
-path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned3.parquet"
+path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-04-01_cleaned.parquet"
 tweets <- arrow::read_parquet(path2)
 
 
