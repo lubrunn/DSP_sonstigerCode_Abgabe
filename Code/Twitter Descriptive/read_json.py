@@ -52,7 +52,7 @@ for folder in folders:
             if not os.path.exists(new_dest):
                 os.mkdir(os.path.join(new_dest))
             files = os.listdir(os.path.join(source,folder, subfolder))
-            for file in files:
+            for file in [k for k in files if ".json" in k]:
                 
                 tweets = []
                 path = os.path.join(source,folder,subfolder, file)
@@ -92,7 +92,7 @@ for folder in folders:
         if not os.path.exists(new_dest):
             os.mkdir(os.path.join(new_dest))
         files = os.listdir(os.path.join(source,folder))
-        for file in files:
+        for file in [k for k in files if ".json" in k]:
             
             tweets = []
             path = os.path.join(source,folder, file)
