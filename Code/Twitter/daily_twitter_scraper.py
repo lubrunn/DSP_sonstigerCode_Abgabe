@@ -28,8 +28,11 @@ else:
 
 #%%
 # all required dates
-today = datetime.today().strftime('%Y-%m-%d')
-date_list_needed = pd.date_range(start="2018-11-30",end=today)
+yesterday = (datetime.today()- pd.Timedelta(days = 1)).strftime('%Y-%m-%d') 
+
+# do it for yesterday because otherwise search might be incomplete because 
+# current day is still generating tweets
+date_list_needed = pd.date_range(start="2018-11-30",end=yesterday)
 
 
 #%% 
