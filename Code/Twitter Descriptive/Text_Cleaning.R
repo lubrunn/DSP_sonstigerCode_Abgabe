@@ -1,5 +1,6 @@
 if(!require("corpus")) install.packages("corpus")
 if(!require("hunspell")) install.packages("hunspell")
+# install.packages("stopwords")
 
 library(tidyverse)
 
@@ -57,7 +58,7 @@ library(hunspell)
 
 # only one file
  
-tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-03-01.json)"))
+tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
 
 #a <- head(tweets_raw, 1000)
 
@@ -69,6 +70,9 @@ tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at,
 
 ### remove tweets that are not in correct language
 tweets <- tweets %>% filter(language == "en")
+
+### remove duplicates
+tweet_u <- tweets[duplicated(tweets$doc_id), ]
 
 # testing with single tweet
 #tweets <- tweets[1,]
@@ -186,6 +190,13 @@ tweets <-tweets %>% rowwise() %>%
   ungroup()
 
 
+## same for hashtags
+# collapse text column list to one string again
+tweets <-tweets %>% rowwise() %>%
+  mutate(hashtags = paste(hashtags, collapse=' ')) %>%
+  ungroup()
+
+
 ###### place column contains lists
 # move coordinates into two lat/long columns
 tweets <- unnest_wider(tweets, place) %>%
@@ -198,8 +209,12 @@ tweets <- unnest_wider(tweets, place) %>%
 
 # remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
 # e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
-tweets$text <- removeWords(tweets$text,c(stopwords("SMART"),
-                                         "face"))
+tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
+                                         stopwords::stopwords("en", "snowball"),
+                                         stopwords::stopwords("en", "nltk"),
+                                         "face",
+                                         "amp",
+                                         "make"))
 
 # remove whitespace again
 #get rid of unnecessary white spaces
@@ -222,7 +237,7 @@ tweets_orig <- tweets
 #### save cleaned file
 ######################################
 # parquetfile
-path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-01-01_cleaned.parquet"
+path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-04-01_cleaned.parquet"
 arrow::write_parquet(tweets, path2)
 
 
