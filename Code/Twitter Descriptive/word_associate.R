@@ -8,38 +8,38 @@ library(tidytext)
 
 
 
-tdm <- dtm_m %>% t()
-# change it to a Boolean matrix
-tdm[tdm>=1] <- 1
-# transform into a term-term adjacency matrix
-termMatrix <- tdm %*% t(tdm)
-# inspect terms numbered 5 to 10
-termMatrix[5:10,5:10]
-
-
-# build a graph from the above matrix
-g <- graph.adjacency(termMatrix, weighted=T, mode = "undirected")
-# remove loops
-g <- simplify(g)
-# set labels and degrees of vertices
-V(g)$label <- V(g)$name
-V(g)$degree <- degree(g)
-
-# set seed to make the layout reproducible
-set.seed(3952)
-layout1 <- layout.fruchterman.reingold(g)
-
-plot(g, layout=layout1)
-
-
-V(g)$label.cex <- 2.2 * V(g)$degree / max(V(g)$degree)+ .2
-V(g)$label.color <- rgb(0, 0, .2, .8)
-V(g)$frame.color <- NA
-egam <- (log(E(g)$weight)+.4) / max(log(E(g)$weight)+.4)
-E(g)$color <- rgb(.5, .5, 0, egam)
-E(g)$width <- egam
-# plot the graph in layout1
-plot(g, layout=layout1)
+# tdm <- dtm_m %>% t()
+# # change it to a Boolean matrix
+# tdm[tdm>=1] <- 1
+# # transform into a term-term adjacency matrix
+# termMatrix <- tdm %*% t(tdm)
+# # inspect terms numbered 5 to 10
+# termMatrix[5:10,5:10]
+# 
+# 
+# # build a graph from the above matrix
+# g <- graph.adjacency(termMatrix, weighted=T, mode = "undirected")
+# # remove loops
+# g <- simplify(g)
+# # set labels and degrees of vertices
+# V(g)$label <- V(g)$name
+# V(g)$degree <- degree(g)
+# 
+# # set seed to make the layout reproducible
+# set.seed(3952)
+# layout1 <- layout.fruchterman.reingold(g)
+# 
+# plot(g, layout=layout1)
+# 
+# 
+# V(g)$label.cex <- 2.2 * V(g)$degree / max(V(g)$degree)+ .2
+# V(g)$label.color <- rgb(0, 0, .2, .8)
+# V(g)$frame.color <- NA
+# egam <- (log(E(g)$weight)+.4) / max(log(E(g)$weight)+.4)
+# E(g)$color <- rgb(.5, .5, 0, egam)
+# E(g)$width <- egam
+# # plot the graph in layout1
+# plot(g, layout=layout1)
 
 
 
@@ -133,13 +133,14 @@ ngram_network_plot <- function(df, n, threshold){
 }
 
 
-ngram_network_plot(tweets, n = 10, 5)
+ngram_network_plot(tweets, n = 5, 20)
 
 
 
 ######################################
 ######### try out area
 #######################################
+df <- tweets
 n <- 10
 threshold <- 5
 bi.gram.words <- df %>% 
@@ -164,6 +165,17 @@ bi.gram.words %<>%
   filter(! is.na(.))
 
 
+# drop rows where one word appears multiple times
+unique_words <- bi.gram.words %>%
+  select(split_cols) %>%
+  unite(words_all, sep = ", ") %>%
+  apply(1,function(x) n_distinct(as.list(strsplit(as.character(x), ",")[[1]]))) == length(split_cols)
+
+# filter out and keep only unique combinations
+bi.gram.words <- bi.gram.words[unique_words,]
+       
+       
+     
 # count number of times 4 words occur together
 bi.gram.count <- bi.gram.words %>%
   select(split_cols) %>%
