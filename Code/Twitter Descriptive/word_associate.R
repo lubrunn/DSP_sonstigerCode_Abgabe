@@ -4,6 +4,7 @@ library(networkD3)
 library(igraph)
 library(glue)
 library(rlist)
+library(tidytext)
 
 
 
@@ -132,11 +133,90 @@ ngram_network_plot <- function(df, n, threshold){
 }
 
 
-ngram_network_plot(tweets, 4, 5)
+ngram_network_plot(tweets, n = 10, 5)
+
+
+
+######################################
+######### try out area
+#######################################
+n <- 10
+threshold <- 5
+bi.gram.words <- df %>% 
+  unnest_tokens(
+    input = text, 
+    output = ngram, 
+    token = 'ngrams', 
+    n = n
+  ) %>% 
+  filter(! is.na(ngram))
+
+# list of words to split into
+
+split_cols <- c()
+for (i in 1:n){
+  word <- glue("word{i}")
+  split_cols <- list.append(split_cols, word)
+}
+
+bi.gram.words %<>% 
+  separate(col = ngram, into = split_cols, sep = ' ') %>% 
+  filter(! is.na(.))
+
+
+# count number of times 4 words occur together
+bi.gram.count <- bi.gram.words %>%
+  select(split_cols) %>%
+  group_by_all() %>%
+  summarise(n = n())  %>%
+  arrange(desc(n)) %>%
+  # We rename the weight column so that the 
+  # associated network gets the weights (see below).
+  rename(weight = n)
 
 
 
 
+
+
+# set threshold --> only select word combinations that appear more than
+# threshold times
+
+
+network <-  bi.gram.count %>%
+  filter(weight > threshold) %>%
+  graph_from_data_frame(directed = FALSE)
+
+# Store the degree.
+V(network)$degree <- strength(graph = network)
+# Compute the weight shares.
+E(network)$width <- E(network)$weight/max(E(network)$weight)
+
+# Create networkD3 object.
+network.D3 <- igraph_to_networkD3(g = network)
+# Define node size.
+network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degree)
+# Degine color group (I will explore this feature later).
+network.D3$nodes <- network.D3$nodes %>% mutate(Group = 1)
+# Define edges width. 
+network.D3$links$Width <- 10*E(network)$width
+
+forceNetwork(
+  Links = network.D3$links, 
+  Nodes = network.D3$nodes, 
+  Source = 'source', 
+  Target = 'target',
+  NodeID = 'name',
+  Group = 'Group', 
+  opacity = 0.9,
+  Value = 'Width',
+  Nodesize = 'Degree', 
+  # We input a JavaScript function.
+  linkWidth = JS("function(d) { return Math.sqrt(d.value); }"), 
+  fontSize = 12,
+  zoom = TRUE, 
+  opacityNoHover = 1
+)
 
 
 
@@ -219,3 +299,132 @@ forceNetwork(
   opacityNoHover = 1
 )
 
+
+
+
+
+
+
+
+
+
+
+################################################
+################ network plot for specific word
+###############################################
+
+word_network_plot <- function(df, n, threshold, word){
+  
+  
+  bi.gram.words <- df %>% 
+    filter(grepl(word, text)) %>%
+    unnest_tokens(
+      input = text, 
+      output = ngram, 
+      token = 'ngrams', 
+      n = n
+    ) %>% 
+    filter(! is.na(ngram))
+  
+  # list of words to split into
+  
+  split_cols <- c()
+  for (i in 1:n){
+    word_col <- glue("word{i}")
+    split_cols <- list.append(split_cols, word_col)
+  }
+  
+  bi.gram.words %<>% 
+    separate(col = ngram, into = split_cols, sep = ' ') %>% 
+    filter(! is.na(.))
+  
+  
+  # count number of times 4 words occur together
+  bi.gram.count <- bi.gram.words %>%
+    select(split_cols) %>%
+    group_by_all() %>%
+    summarise(n = n())  %>%
+    arrange(desc(n)) %>%
+    # We rename the weight column so that the 
+    # associated network gets the weights (see below).
+    rename(weight = n)
+  
+  
+  
+  
+  
+  
+  # set threshold --> only select word combinations that appear more than
+  # threshold times
+  
+  
+  network <-  bi.gram.count %>%
+    filter(weight > threshold) %>%
+    graph_from_data_frame(directed = FALSE)
+  
+  # Store the degree.
+  V(network)$degree <- strength(graph = network)
+  
+  
+  
+  
+ 
+
+  
+  
+  
+  # Compute the weight shares.
+  E(network)$width <- E(network)$weight/max(E(network)$weight)
+  
+  # Create networkD3 object.
+  network.D3 <- igraph_to_networkD3(g = network)
+  # Define node size.
+  network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degree)
+  # Degine color group (I will explore this feature later).
+  network.D3$nodes <- network.D3$nodes %>% mutate(Group = 1)
+  # Define edges width. 
+  network.D3$links$Width <- 10*E(network)$width
+  
+  deg <- degree(network, mode="all")
+  network.D3$nodes$size <- deg * 3
+  network.D3$nodes$size2 <- sqrt((deg * 3)^3)
+  network.D3$nodes$size2 <- deg * 10
+  network.D3$nodes$size2 <- network.D3$nodes$size^3
+  
+  #### assign searched word to differenct group
+  network.D3$nodes[network.D3$nodes$name == word,"Group"] <- 10
+  
+  # adjust colors of nodes, first is rest, second is main node for word (with group 2)
+  ColourScale <- 'd3.scaleOrdinal()
+            .range([ "#694489", "#ff2a00"]);'
+  
+  # doc: https://www.rdocumentation.org/packages/networkD3/versions/0.4/topics/forceNetwork
+  forceNetwork(
+    Links = network.D3$links, 
+    Nodes = network.D3$nodes, 
+    Source = 'source', 
+    Target = 'target',
+    NodeID = 'name',
+    Group = 'Group', 
+    opacity = 0.8,
+    Value = 'Width',
+    #Nodesize = 'Degree', 
+    Nodesize = "size2", # size of nodes, is column name or column number of network.D3$nodes df
+    radiusCalculation = JS("Math.sqrt(d.nodesize)-2"), # radius of nodes (not sure whats difference to nodesize but has different effect)
+    # We input a JavaScript function.
+    #linkWidth = JS("function(d) { return Math.sqrt(d.value); }"), 
+    linkWidth = 4, # width of the linkgs
+    fontSize = 30, # font size of words
+    zoom = TRUE, 
+    opacityNoHover = 100,
+    linkDistance = 50, # length of links
+    charge =  -70, # the more negative the furher away nodes,
+    linkColour = "red", #color of links
+    bounded = T, # if T plot is limited and can not extend outside of box
+    # colourScale = JS("d3.scaleOrdinal(d3.schemeCategory10);")# change color scheme
+    colourScale = JS(ColourScale)
+  )
+  
+}
+
+word_network_plot(tweets, 2, 1, "covid")
