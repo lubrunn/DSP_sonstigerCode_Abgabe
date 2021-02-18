@@ -30,7 +30,7 @@ import pandas as pd
 
 
 #%%
-source = "raw_test"
+source = "raw"
 dest = "raw_feather"
 folders = [k for k in os.listdir(source) if "Comp" in k or "Filter" in k]
 
