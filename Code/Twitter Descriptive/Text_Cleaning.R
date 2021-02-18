@@ -57,18 +57,36 @@ library(hunspell)
 
 # only one file
  
-tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2018-12-07.json)"))
+tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-03-01.json)"))
 
 #a <- head(tweets_raw, 1000)
 
 # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
 tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at, 
-                                user_id, place, language, replies_count, 
-                                retweets_count, likes_count, retweet)
+                                user_id, username, hashtags,
+                                place, language, replies_count, 
+                                retweets_count, likes_count)
+
+### remove tweets that are not in correct language
+tweets <- tweets %>% filter(language == "en")
 
 # testing with single tweet
 #tweets <- tweets[1,]
-tweets$text <- "Mr. Jones &amp; Jones Jones don't don't can't shouldn't haven't @twitter_user123 it's so soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
+# tweets$text <- "Mr. Jones &amp; Jones Jones don't don't can't shouldn't haven't @twitter_user123 it's so soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
+
+tweets$text <- text_tokens(tweets$text)
+
+# function that removes consecutive duplicates
+dup_remover <- function(string){
+  
+  string <- paste(rle(unlist(string))$values, collapse = " ")
+  return(string)
+}
+
+tweets$text <- sapply(tweets$text, dup_remover)
+
+
+
 
 ###
 tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
@@ -159,16 +177,11 @@ stem_hunspell <- function(term) {
 }
 tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
 
-string_list <- 
-x <- scan(what = character(), text = "a a a b c c d e a a b b b e e d d d w  ad wad a   wdad wa fe feafa afwa fafw")
-# function that removes consecutive duplicates
-dup_remover <- function(string){
-  x <- scan(what = character(), text = string)
-  paste(rle(x)$values, collapse = " ")
-  return(string)
-  }
+
+
+
 # collapse text column list to one string again
-tweets <-tweets %>% rowwise() %>% 
+tweets <-tweets %>% rowwise() %>%
   mutate(text = paste(text, collapse=' ')) %>%
   ungroup()
 
@@ -183,29 +196,36 @@ tweets <- unnest_wider(tweets, place) %>%
 
 
 
-# remove stopwords
-tweets$text <- removeWords(tweets$text,stopwords("SMART"))
+# remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
+# e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
+tweets$text <- removeWords(tweets$text,c(stopwords("SMART"),
+                                         "face"))
 
 # remove whitespace again
 #get rid of unnecessary white spaces
 tweets$text <- stringr::str_squish(tweets$text)
 
 
-# save created at as date insted of datetime
-tweets$created_at <- as.character(as.Date(tweets$created_at))
+# save created at as date instead of datetime
+# tweets$created_at <- as.character(as.Date(tweets$created_at))
 
 # check how much data can be saved by removing columns
 tweets_orig <- tweets
 
 
-tweets <- tweets_orig %>% select(
-  doc_id, text, created_at, language,
-  retweets_count, likes_count
-)
+# tweets <- tweets_orig %>% select(
+#   doc_id, text, created_at, language,
+#   retweets_count, likes_count
+# )
 
 #######################################
 #### save cleaned file
 ######################################
+# parquetfile
+path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-01-01_cleaned.parquet"
+arrow::write_parquet(tweets, path2)
+
+
 # 1st feather format
 path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
 feather::write_feather(tweets, path)
@@ -214,9 +234,7 @@ feather::write_feather(tweets, path)
 path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
 arrow::write_feather(tweets, path1)
 
-# parquetfile
-path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned3.parquet"
-arrow::write_parquet(tweets, path2)
+
 
 # parquet file with two tweet dfs
 tweets2 <- rbind(tweets, tweets)
