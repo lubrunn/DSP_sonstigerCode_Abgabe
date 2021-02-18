@@ -131,6 +131,20 @@ for folder in folders:
             # get all files for that subfolder
             files = os.listdir(os.path.join(path_new,subfolder))
             
+            # find last date that has been updated
+            # extract date from file names
+            dates = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files]
+             
+            # convert to dates
+            dates_list = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
+            
+            # find last date
+            last_update = max(dates_list)
+            dates_list_have = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
+             
+            # find dates between last scrape and today
+            missing_dates = pd.date_range(start=last_update,end=yesterday)
+                    
             # get missing dates
             missing_dates = date_missing_finder(files)
             
