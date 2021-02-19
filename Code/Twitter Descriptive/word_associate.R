@@ -232,7 +232,7 @@ bi.gram.count <- bi.gram.count %>%
   select(word1, word2, weight)
 
 
-network_df <-  bi.gram.count %>%
+network_df2 <-  bi.gram.count %>%
   filter(weight > threshold)
 
 network <-  bi.gram.count %>%
