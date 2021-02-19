@@ -191,7 +191,7 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
             # find search term for company in search term df
             
             
-                search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
+            search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
 
             # set up first part of search term (without dates)
             search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
