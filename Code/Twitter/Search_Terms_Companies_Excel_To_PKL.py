@@ -29,7 +29,7 @@ for i in range(0,len(search_terms_companies)):
     elif "Dow" in terms:
         terms.pop(0)
     elif "Johnson & Johnson" in terms:
-        terms[0] = "Johnson &amp; Johnson"
+        terms[0] = "JohnsonJohnson"
             
     
     
