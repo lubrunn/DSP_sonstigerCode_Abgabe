@@ -5,16 +5,42 @@
 # network plot
 
 sent_to_network_plot <- function(df, threshold){
-  # put every single word into new column, so one row per word in tweet
-  tweets_section_words <- df %>%
-    unnest_tokens(word, text)
   
-  # show all pairs out of all pairs per tweet
-  # feel so forgoten that --> feel so, feel forgotten, feel that, so feel, so forgotten, so that etc.
-  word_pairs <- tweets_section_words %>%
-    widyr::pairwise_count(word, doc_id, sort = T) %>%
-    rename("weight" = n)
   
+  
+  '
+gives nice overview of all possible word combinations in a day
+bigramm:
+  shows only word combinations moving forward
+here:
+  shows all bigrams from a sentence --> backwards and skipping words
+
+example: "I am lukas and like R"
+bigram:
+  "I am", "am lukas", "lukas and" etc.
+herre:
+  "I am", "I lukas", ... , "I R", "am I", "am lukas", etc.
+  
+pro bigram:
+  - uebersichtlicher da weniger
+pro here:
+  - mehr connections, man sieht connection in beide Richtungen und sieht auch Beziehungen von Woertern die nicht direkt nacheinander kommen
+con bigram:
+  - nur consecutive bigram und nicht backwards --> missing info
+on here:
+  - kann unübersichtlich werden, wenn man es nicht richtig einstellt --> mehr requirements an User oder preprocess
+  
+'
+# put every single word into new column, so one row per word in tweet
+tweets_section_words <- df %>%
+  unnest_tokens(word, text)
+
+# show all pairs out of all pairs per tweet
+# feel so forgoten that --> feel so, feel forgotten, feel that, so feel, so forgotten, so that etc.
+word_pairs <- tweets_section_words %>%
+  widyr::pairwise_count(word, doc_id, sort = T) %>%
+  rename("weight" = n)
+
   
   
 network_df <- word_pairs  %>%
@@ -37,6 +63,11 @@ network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degre
 network.D3$nodes <- network.D3$nodes %>% mutate(Group = 1)
 # Define edges width. 
 network.D3$links$Width <- 10*E(network)$width
+
+# adjust nodesize
+deg <- degree(network, mode="all")
+#network.D3$nodes$size <- deg * 3
+
 
 forceNetwork(
   Links = network.D3$links, 
@@ -68,6 +99,8 @@ sent_to_network_plot(tweets, 20)
 ###############################################
 
 word_network_plot <- function(df, threshold, word){
+
+
   
   
   # put every single word into new column, so one row per word in tweet
@@ -158,7 +191,7 @@ word_network_plot <- function(df, threshold, word){
   
 }
 
-word_network_plot(tweets, 4, "trump")
+word_network_plot(tweets, 2, "covid")
 
 
 
@@ -167,13 +200,31 @@ word_network_plot(tweets, 4, "trump")
 ###############################
 ###### correlations
 ###############################
+
+'
+compared two bigram plots
+
+- show words by correlation --> how often do they appear together compared to alone
+- before when filtering for freq we just got words that appear often anyway
+- here now get words that really appear often together independent of their total frequency
+
+- advantage :
+  - shows more words
+  - better connections
+  - better overview
+  - can also only look at single words easily
+
+- disadvantage:
+  - very large for small filters
+  
+'
 tweets_section_words <- tweets %>%
   unnest_tokens(word, text)
 
 
 word_cors <- tweets_section_words %>%
   group_by(word) %>%
-  filter(n() >= 20) %>%
+  filter(n() >= 10) %>% # only keep words that appear at least 20 times
   widyr::pairwise_cor(word, doc_id, sort = TRUE)
 
 
@@ -196,7 +247,7 @@ word_cors %>%
 
 
 network <-  word_cors %>%
-  filter(correlation > 0.15) %>%
+  filter(correlation > 0.15) %>% #filter out words wih too low correlation
   graph_from_data_frame(directed = FALSE)
 
 # Store the degree.
@@ -264,13 +315,23 @@ forceNetwork(
 #################################################################
 ########## same but for only certain terms  #####################
 #################################################################
+
+'
+here show only bigrams with words of interest
+e.g. tweet: covid has taken a toll
+show : covid has, covid taken, covid toll etc. but not: has taken, taken a etc.
+
+- good for getting overview what people tweet with regard to term of interest
+- bad for going deeper because gets crowed around term of interest
+
+'
 tweets_section_words <- tweets %>%
   unnest_tokens(word, text)
 
 
 word_cors <- tweets_section_words %>%
   group_by(word) %>%
-  filter(n() >= 20) %>%
+   filter(n() >= 20) %>%
   widyr::pairwise_cor(word, doc_id, sort = TRUE)
 
 word_cors_b <- word_cors %>% filter(item1 == "covid")
@@ -278,7 +339,8 @@ word_cors_b <- word_cors %>% filter(item1 == "covid")
 
 
 network <-  word_cors %>%
-  filter(item1 %in% c("covid", "trump", "china")) %>%
+  filter(item1 %in% c("covid", "trump", "china") |
+           item2 %in%  c("covid", "trump", "china")) %>%
   filter(correlation > 0.05) %>%
   graph_from_data_frame(directed = FALSE)
 
@@ -349,11 +411,41 @@ forceNetwork(
 
 
 ##############################################
-####### only tweets with word in them but then all connections
+####### only tweets with word in them but then all connections for these tweets
+# e.g. tweet: "trump ate big bag of chips" --> trum ate, trum big etc. but also big bag, bag chips etc.
 ################################################
-tweets_section_words <- tweets %>%
-  filter(grepl("trump", text)) %>%
-  unnest_tokens(word, text)
+' 
+this is a nice way to get an overview of tweets involving certain terms
+- goes deeper than just showing combinations with search term and is not so crowded around word of interest
+- hard to track which word belong to which search term
+
+
+
+'
+
+tomatch <- c("trump", "covid", "russia")
+
+# tweets_section_words_a <- tweets %>%
+#   filter(grepl(paste(tomatch, collapse="|"), text)) %>%
+#   unnest_tokens(word, text)
+
+
+tweets_section_words_b <- tweets %>%
+  unnest_tokens(word, text) %>%
+  left_join(subset(tweets, select = c(doc_id, text))) %>%
+filter(grepl(paste(tomatch, collapse="|"), text))
+
+
+# problem thru duplcate id
+# find out which rows in one but no the other
+# id_a <- unique(tweets_section_words_a$doc_id)
+# id_b <- unique(tweets_section_words_b$doc_id)
+# 
+# conc <- rbind(tweets_section_words_a, subset(tweets_section_words_b,select =  -text))
+# a <- conc[!(duplicated(conc) | duplicated(conc, fromLast = TRUE)), ]
+# 
+# 
+# b <- tweets_section_words_b %>% filter(doc_id %in% a$doc_id)
 
 
 word_cors <- tweets_section_words %>%
@@ -429,3 +521,11 @@ forceNetwork(
   # colourScale = JS("d3.scaleOrdinal(d3.schemeCategory10);")# change color scheme
   colourScale = JS(ColourScale)
 )
+
+
+
+
+
+
+
+  
