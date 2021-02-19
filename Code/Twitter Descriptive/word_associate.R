@@ -166,7 +166,7 @@ ngram_network_plot <- function(df, n, threshold){
 }
 
 
-ngram_network_plot(tweets, n = 2, 20)
+ngram_network_plot(tweets, n = 2, 10)
 
 
 
@@ -175,7 +175,7 @@ ngram_network_plot(tweets, n = 2, 20)
 #######################################
 df <- tweets
 n <- 2
-threshold <- 100
+threshold <- 10
 bi.gram.words <- df %>% 
   unnest_tokens(
     input = text, 
@@ -199,13 +199,13 @@ bi.gram.words %<>%
 
 
 # drop rows where one word appears multiple times
-unique_words <- bi.gram.words %>%
+# unique_words <- bi.gram.words %>%
   select(split_cols) %>%
   unite(words_all, sep = ", ") %>%
   apply(1,function(x) n_distinct(as.list(strsplit(as.character(x), ",")[[1]]))) == length(split_cols)
 
 # filter out and keep only unique combinations
-bi.gram.words <- bi.gram.words[unique_words,]
+# bi.gram.words <- bi.gram.words[unique_words,]
        
        
      
@@ -228,11 +228,11 @@ bi.gram.count <- bi.gram.words %>%
 # threshold times
 
 # test what happens if you removve all words after words 3
-bi.gram.count <- bi.gram.count %>%
+# bi.gram.count <- bi.gram.count %>%
   select(word1, word2, weight)
 
 
-network_df2 <-  bi.gram.count %>%
+# network_df2 <-  bi.gram.count %>%
   filter(weight > threshold)
 
 network <-  bi.gram.count %>%
