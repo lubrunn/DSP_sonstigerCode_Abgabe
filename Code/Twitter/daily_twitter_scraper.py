@@ -49,8 +49,8 @@ info_df.iloc[4,:] = ["En_NoFilter_min_retweets_10", 10, "en", 20000]
 info_df.iloc[5,:] = ["En_NoFilter_min_retweets_50", 50, "en", 20000]  
 info_df.iloc[6,:] = ["En_NoFilter_min_retweets_100", 100, "en",20000]  
 info_df.iloc[7,:] = ["En_NoFilter_min_retweets_200", 200, "en", 40000]  
-info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
-info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
+info_df.iloc[8,:] = ["Companies_de", 0, "de", 10000]  
+info_df.iloc[9,:] = ["Companies_en", 0, "en", 10000]  
 
 
 #%% read in search terms for companies
@@ -140,13 +140,17 @@ for folder in folders:
             
             # find last date
             last_update = max(dates_list)
-            dates_list_have = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
+            
              
             # find dates between last scrape and today
-            missing_dates = pd.date_range(start=last_update,end=yesterday)
+            # if last_update is same or later than yesterday do not update
+            if last_update < datetime.strptime(yesterday, "%Y-%m-%d").date():
+                missing_dates = pd.date_range(start=last_update + pd.Timedelta(days = 1),end=yesterday)
+            else:
+                missing_dates = []
                     
             # get missing dates
-            missing_dates = date_missing_finder(files)
+            # missing_dates = date_missing_finder(files)
             
             # save missing dates to folder name into dict
             missing_dates_dic[subfolder] = missing_dates
@@ -185,9 +189,8 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # for each company
         for subfolder in subfolders:
             # find search term for company in search term df
-            if "Johnson" in subfolder:
-                search_name = search_terms_companies[search_terms_companies.index.str.split(" ").str[0] == subfolder.split("_")[0].split(" ")[0]].search_term.item()
-            else:
+            
+            
                 search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
 
             # set up first part of search term (without dates)
