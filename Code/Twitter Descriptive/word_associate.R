@@ -8,30 +8,30 @@ library(tidytext)
 
 
 
-# tdm <- dtm_m %>% t()
-# # change it to a Boolean matrix
-# tdm[tdm>=1] <- 1
-# # transform into a term-term adjacency matrix
-# termMatrix <- tdm %*% t(tdm)
-# # inspect terms numbered 5 to 10
-# termMatrix[5:10,5:10]
-# 
-# 
-# # build a graph from the above matrix
-# g <- graph.adjacency(termMatrix, weighted=T, mode = "undirected")
-# # remove loops
-# g <- simplify(g)
-# # set labels and degrees of vertices
-# V(g)$label <- V(g)$name
-# V(g)$degree <- degree(g)
-# 
-# # set seed to make the layout reproducible
-# set.seed(3952)
-# layout1 <- layout.fruchterman.reingold(g)
-# 
-# plot(g, layout=layout1)
-# 
-# 
+tdm <- dtm_m %>% t()
+# change it to a Boolean matrix
+tdm[tdm>=1] <- 1
+# transform into a term-term adjacency matrix
+termMatrix <- tdm %*% t(tdm)
+# inspect terms numbered 5 to 10
+termMatrix[5:10,5:10]
+
+
+# build a graph from the above matrix
+g <- graph.adjacency(termMatrix, weighted=T, mode = "directed")
+# remove loops
+g <- simplify(g)
+# set labels and degrees of vertices
+V(g)$label <- V(g)$name
+V(g)$degree <- degree(g)
+
+# set seed to make the layout reproducible
+set.seed(3952)
+layout1 <- layout.fruchterman.reingold(g)
+
+plot(g, layout=layout1)
+
+
 # V(g)$label.cex <- 2.2 * V(g)$degree / max(V(g)$degree)+ .2
 # V(g)$label.color <- rgb(0, 0, .2, .8)
 # V(g)$frame.color <- NA
@@ -41,8 +41,37 @@ library(tidytext)
 # # plot the graph in layout1
 # plot(g, layout=layout1)
 
+network <- g
+# Store the degree.
+V(network)$degree <- strength(graph = network)
+# Compute the weight shares.
+E(network)$width <- E(network)$weight/max(E(network)$weight)
 
+# Create networkD3 object.
+network.D3 <- igraph_to_networkD3(g = network)
+# Define node size.
+network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degree)
+# Degine color group (I will explore this feature later).
+network.D3$nodes <- network.D3$nodes %>% mutate(Group = 1)
+# Define edges width. 
+network.D3$links$Width <- 10*E(network)$width
 
+forceNetwork(
+  Links = network.D3$links, 
+  Nodes = network.D3$nodes, 
+  Source = 'source', 
+  Target = 'target',
+  NodeID = 'name',
+  Group = 'Group', 
+  opacity = 0.9,
+  Value = 'Width',
+  Nodesize = 'Degree', 
+  # We input a JavaScript function.
+  linkWidth = JS("function(d) { return Math.sqrt(d.value); }"), 
+  fontSize = 12,
+  zoom = TRUE, 
+  opacityNoHover = 1
+)
 
 
 
@@ -93,7 +122,11 @@ ngram_network_plot <- function(df, n, threshold){
   
   # set threshold --> only select word combinations that appear more than
   # threshold times
-
+ 
+  
+  
+  
+  
   
   network <-  bi.gram.count %>%
     filter(weight > threshold) %>%
@@ -133,7 +166,7 @@ ngram_network_plot <- function(df, n, threshold){
 }
 
 
-ngram_network_plot(tweets, n = 5, 20)
+ngram_network_plot(tweets, n = 2, 20)
 
 
 
@@ -141,8 +174,8 @@ ngram_network_plot(tweets, n = 5, 20)
 ######### try out area
 #######################################
 df <- tweets
-n <- 10
-threshold <- 5
+n <- 2
+threshold <- 100
 bi.gram.words <- df %>% 
   unnest_tokens(
     input = text, 
@@ -194,6 +227,13 @@ bi.gram.count <- bi.gram.words %>%
 # set threshold --> only select word combinations that appear more than
 # threshold times
 
+# test what happens if you removve all words after words 3
+bi.gram.count <- bi.gram.count %>%
+  select(word1, word2, weight)
+
+
+network_df <-  bi.gram.count %>%
+  filter(weight > threshold)
 
 network <-  bi.gram.count %>%
   filter(weight > threshold) %>%
@@ -234,9 +274,9 @@ forceNetwork(
 
 #######################
 ### skipgram
-skip.window <- 2
+skip.window <- 3
 
-skip.gram.words <- tweets %>% 
+skip.gram.words <- tweets_small %>% 
   unnest_tokens(
     input = text, 
     output = skipgram, 
@@ -244,7 +284,6 @@ skip.gram.words <- tweets %>%
     n = skip.window
   ) %>% 
   filter(! is.na(skipgram))
-
 
 
 
@@ -439,4 +478,4 @@ word_network_plot <- function(df, n, threshold, word){
   
 }
 
-word_network_plot(tweets, 2, 1, "covid")
+word_network_plot(tweets, 3, 3, "covid")
