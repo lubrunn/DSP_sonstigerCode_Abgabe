@@ -199,4 +199,6 @@ for lang in lang_folders:
         
         
         new_filename = f"{lang}_NoFilter_{date}.feather"
-        df.to_feather(os.path.join(dest, f"{lang}_NoFilter",new_filename))
+        # version 1.0 for readability in R
+        df.to_feather(os.path.join(dest, f"{lang}_NoFilter",new_filename),
+                      version="1.0")
