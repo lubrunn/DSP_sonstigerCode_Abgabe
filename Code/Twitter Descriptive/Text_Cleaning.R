@@ -4,7 +4,7 @@ if(!require("hunspell")) install.packages("hunspell")
 
 library(tidyverse)
 
-library(jsonlite)
+
 library(arrow) # read feather files
 
 
@@ -21,6 +21,7 @@ library(textclean)
 
 
 library(hunspell)
+
 
 
 # read in data
@@ -82,7 +83,9 @@ tweets$text <- gsub("’", "'", tweets$text)
 #Mr. = Mister
 tweets$text <- replace_abbreviation(tweets$text)  
 # it's = it is
-tweets$text <- replace_contraction(tweets$text) 
+time2 <- Sys.time()
+tweets$text <- replace_contraction(tweets$text)
+print(Sys.time() - time2)
 
 # replace haven't because replace_contractions does not
 tweets$text <- gsub("haven't", "have not", tweets$text)
@@ -90,16 +93,24 @@ tweets$text <- gsub("haven't", "have not", tweets$text)
 tweets$text <- replace_word_elongation(tweets$text) 
 #remove email adresses
 tweets$text <- replace_email(tweets$text) 
+
 #replaces emoticons
+time2 <- Sys.time()
 tweets$text <- replace_emoticon(tweets$text) 
+print(Sys.time() - time2)
+
 #removes html markup: &euro becomes euro
 tweets$text <- replace_html(tweets$text) 
 # C+ becomes slighlty above average
 tweets$text <- replace_grade(tweets$text) 
 #lol = laughing out loud
-tweets$text <- replace_internet_slang(tweets$text) 
+tweets$text <- replace_internet_slang(tweets$text)
+
 #replaces emojis with text representations
-tweets$text <- replace_emoji(tweets$text) 
+time2 <- Sys.time()
+tweets$textN <- replace_emoji(tweets$text) 
+print(Sys.time() - time2)
+
 #replaces with a unique identifier that corresponds to lexicon::hash_sentiment_emoji
 tweets$text <- replace_emoji_identifier(tweets$text) 
 #removes chracter strings with non-ASCII chracters
