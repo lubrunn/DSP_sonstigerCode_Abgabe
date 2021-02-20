@@ -242,7 +242,7 @@ for key,value in search_term_dict.items():
     for attempt in range(10):
         
         try:
-            print(f"Attempt: {attempt})")
+            print(f"Attempt: {attempt}")
             #print(key, value)
             # check if key (folder name) is not in nofilter folder --> company folder
             if key not in nofilter_folders:
