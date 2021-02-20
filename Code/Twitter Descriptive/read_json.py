@@ -112,9 +112,10 @@ dates_list = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(da
 
 # find last date
 last_update = max(dates_list)
+first_update = min(dates_list)
 
 
-date_list_needed = pd.date_range(start="2018-11-30",end=last_update).strftime('%Y-%m-%d').to_list()
+date_list_needed = pd.date_range(start=first_update,end=last_update).strftime('%Y-%m-%d').to_list()
 
 #%% testing
 date = date_list_needed[7]
@@ -162,6 +163,8 @@ for lang in lang_folders:
         # drop duplicate tweets
         df = df.drop_duplicates(subset=["id"], keep='first')
     
+        # only keep tweets with correct language
+        df = df[df["language"] == lang.lower()]
         # split coordingates column into lat/long
         if ~sum(df["place"] == "") == len(df):
             coord = df["place"].apply(pd.Series)["coordinates"].apply(pd.Series)
