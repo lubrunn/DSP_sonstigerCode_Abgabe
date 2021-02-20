@@ -76,16 +76,17 @@ def filter_aggregation(df,lan,filt_len,filt_ret,filt_lik,median_len,ticker):
     filt_len = pd.Series(np.repeat(filt_len, len(mean_sentiment), axis=0))   
     
     all_dates = pd.Series(all_dates)
-    mean_sentiment = mean_sentiment.reset_index().drop('index',axis=1)
-    mean_sentiment_by_likes = mean_sentiment_by_likes.reset_index().drop('index',axis=1)
-    mean_sentiment_by_length = mean_sentiment_by_length.reset_index().drop('index',axis=1)
-    mean_sentiment_by_retweet = mean_sentiment_by_retweet.reset_index().drop('index',axis=1)
+    mean_sentiment = mean_sentiment.reset_index().drop('date',axis=1)
+    mean_sentiment_by_likes = mean_sentiment_by_likes.reset_index().drop('date',axis=1)
+    mean_sentiment_by_length = mean_sentiment_by_length.reset_index().drop('date',axis=1)
+    mean_sentiment_by_retweet = mean_sentiment_by_retweet.reset_index().drop('date',axis=1)
+    
     
     final = pd.DataFrame({'date':all_dates,
-                              'sentiment_mean':mean_sentiment,
-                              'sentiment_weight_retweet':mean_sentiment_by_retweet,
-                              'sentiment_weight_length':mean_sentiment_by_length,
-                              'sentiment_weight_likes':mean_sentiment_by_likes,
+                              'sentiment_mean':mean_sentiment.iloc[:,0],
+                              'sentiment_weight_retweet':mean_sentiment_by_retweet.iloc[:,0],
+                              'sentiment_weight_length':mean_sentiment_by_length.iloc[:,0],
+                              'sentiment_weight_likes':mean_sentiment_by_likes.iloc[:,0],
                               'retweet_filter':filt_ret,
                               'likes_filter':filt_lik,
                               'long_tweet':filt_len})
