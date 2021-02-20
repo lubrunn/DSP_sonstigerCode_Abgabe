@@ -203,7 +203,12 @@ for date in date_list_needed:
     
     df.reset_index(inplace = True)
     
-    df["tweet_n"] = df["tweet"].swifter.apply(lambda tweet: remove_light(tweet))
+    # remove links and handles
+    df["tweet"] = df["tweet"].apply(lambda tweet: remove_light(tweet))
+    # strip extra whitespace
+    df["tweet"] = df["tweet"].str.strip()
+    df["tweet"] = df["tweet"].replace('\s+', ' ', regex=True)
+    
     
     # compute length of tweets
     length_checker = np.vectorize(len)
