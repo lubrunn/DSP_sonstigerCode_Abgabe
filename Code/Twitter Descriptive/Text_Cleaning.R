@@ -29,11 +29,14 @@ setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 
 path <- "raw_feather/En_NoFilter"
 
+
+time1 <- Sys.time()
 files <- list.files(path)
 file <- files[1]
 tweets_raw <- arrow::read_feather(file.path(path, file))
 
 #a <- head(tweets_raw, 1000)
+
 
 # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
 tweets <- tweets_raw %>% rename("doc_id" = id, "text" =  tweet)
@@ -187,6 +190,8 @@ tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
 tweets$text <- stringr::str_squish(tweets$text)
 
 
+
+print(glue("The process took {Sys.time() - time1}"))
 # save created at as date instead of datetime
 # tweets$created_at <- as.character(as.Date(tweets$created_at))
 
@@ -203,50 +208,50 @@ tweets_orig <- tweets
 #### save cleaned file
 ######################################
 # parquetfile
-path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-04-01_cleaned.parquet"
-arrow::write_parquet(tweets, path2)
+path_save = "C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/text_cleaned/En_NoFilter/En_NoFilter_2020-04-01_cleaned.parquet"
+arrow::write_parquet(tweets, path_save)
 
 
-# 1st feather format
-path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
-feather::write_feather(tweets, path)
-
-# different feather format
-path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
-arrow::write_feather(tweets, path1)
-
-
-
-# parquet file with two tweet dfs
-tweets2 <- rbind(tweets, tweets)
-path22 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned32.parquet"
-arrow::write_parquet(tweets2, path22)
-
-# with 80k tweets
-tweets3 <- rbind(tweets2, tweets2)
-path23 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned33.parquet"
-arrow::write_parquet(tweets3, path23)
-
-# with 160k tweets
-tweets4 <- rbind(tweets3, tweets3)
-path24 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned34.parquet"
-arrow::write_parquet(tweets4, path24)
-
-
-#160 mio tweets
-tweets6 <- purrr::map_dfr(seq_len(1000), ~tweets4)
-path25 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned35.parquet"
-arrow::write_parquet(tweets6, path25)
-
-
-# save as csv as reference
-path3 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned4.csv"
-write.csv(tweets, path3)
-
-
-
-
-
-
-
-
+# # 1st feather format
+# path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
+# feather::write_feather(tweets, path)
+# 
+# # different feather format
+# path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
+# arrow::write_feather(tweets, path1)
+# 
+# 
+# 
+# # parquet file with two tweet dfs
+# tweets2 <- rbind(tweets, tweets)
+# path22 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned32.parquet"
+# arrow::write_parquet(tweets2, path22)
+# 
+# # with 80k tweets
+# tweets3 <- rbind(tweets2, tweets2)
+# path23 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned33.parquet"
+# arrow::write_parquet(tweets3, path23)
+# 
+# # with 160k tweets
+# tweets4 <- rbind(tweets3, tweets3)
+# path24 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned34.parquet"
+# arrow::write_parquet(tweets4, path24)
+# 
+# 
+# #160 mio tweets
+# tweets6 <- purrr::map_dfr(seq_len(1000), ~tweets4)
+# path25 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned35.parquet"
+# arrow::write_parquet(tweets6, path25)
+# 
+# 
+# # save as csv as reference
+# path3 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned4.csv"
+# write.csv(tweets, path3)
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
