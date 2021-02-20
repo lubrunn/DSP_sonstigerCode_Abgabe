@@ -40,3 +40,23 @@ for i in range_list:
                 
 
 #load in whole csv to store as feather
+
+df_final = pd.read_csv(r"C:\Users\simon\OneDrive - UT Cloud\Eigene Dateien\Data\Twitter\sentiment\Simon_test\En_NoFilter_20.csv",
+                       header = None)
+df_final.columns = df_final.columns.map(str)
+
+df_final = df_final.rename({"0":"date","1":"sentiment_mean",
+                         "2":"sentiment_weight_retweet","3":"sentiment_weight_length",
+                         "4":"sentiment_weight_likes",
+                         "5":"retweet_filter","6":"likes_filter",
+                         "7":"long_tweet"}, axis = 1)
+
+
+feather.write_feather(df_final, r"C:\Users\simon\OneDrive - UT Cloud\Eigene Dateien\Data\Twitter\sentiment\Simon_test\En_NoFilter_20.feather")   
+
+
+
+
+
+
+
