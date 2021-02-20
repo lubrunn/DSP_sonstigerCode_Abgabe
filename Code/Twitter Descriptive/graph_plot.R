@@ -1,0 +1,7 @@
+rm(list=ls(all=TRUE))
+# install.packages("igraph")
+# install.packages("ggraph")
+# install.packages("tidygraph")
+library(igraph)
+library(ggraph)
+library(tidygraph)

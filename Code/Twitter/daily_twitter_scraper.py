@@ -7,17 +7,32 @@ import pandas as pd
 import nest_asyncio
 nest_asyncio.apply()
 import twint
+import time
 
+
+# vpc or local?
+vpc = False
 #%% set path were all the data is
-path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw"
 
-# set path were company search term pkl is
-path_comp = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
+if vpc == True:
+    path = "/home/lukasbrunner/share/onedrive/Data/Twitter/raw"
+    
+    # set path were company search term pkl is
+    path_comp = "/home/lukasbrunner/share/onedrive/Data/Twitter"
+
+else:
+    path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw"
+    
+    # set path were company search term pkl is
+    path_comp = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
 
 #%%
 # all required dates
-today = datetime.today().strftime('%Y-%m-%d')
-date_list_needed = pd.date_range(start="2018-11-30",end=today)
+yesterday = (datetime.today()- pd.Timedelta(days = 1)).strftime('%Y-%m-%d') 
+
+# do it for yesterday because otherwise search might be incomplete because 
+# current day is still generating tweets
+date_list_needed = pd.date_range(start="2018-11-30",end=yesterday)
 
 
 #%% 
@@ -34,8 +49,8 @@ info_df.iloc[4,:] = ["En_NoFilter_min_retweets_10", 10, "en", 20000]
 info_df.iloc[5,:] = ["En_NoFilter_min_retweets_50", 50, "en", 20000]  
 info_df.iloc[6,:] = ["En_NoFilter_min_retweets_100", 100, "en",20000]  
 info_df.iloc[7,:] = ["En_NoFilter_min_retweets_200", 200, "en", 40000]  
-info_df.iloc[8,:] = ["Companies_de", 0, "de", 5000]  
-info_df.iloc[9,:] = ["Companies_en", 0, "en", 5000]  
+info_df.iloc[8,:] = ["Companies_de", 0, "de", 10000]  
+info_df.iloc[9,:] = ["Companies_en", 0, "en", 10000]  
 
 
 #%% read in search terms for companies
@@ -116,8 +131,26 @@ for folder in folders:
             # get all files for that subfolder
             files = os.listdir(os.path.join(path_new,subfolder))
             
+            # find last date that has been updated
+            # extract date from file names
+            dates = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files]
+             
+            # convert to dates
+            dates_list = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]
+            
+            # find last date
+            last_update = max(dates_list)
+            
+             
+            # find dates between last scrape and today
+            # if last_update is same or later than yesterday do not update
+            if last_update < datetime.strptime(yesterday, "%Y-%m-%d").date():
+                missing_dates = pd.date_range(start=last_update + pd.Timedelta(days = 1),end=yesterday)
+            else:
+                missing_dates = []
+                    
             # get missing dates
-            missing_dates = date_missing_finder(files)
+            # missing_dates = date_missing_finder(files)
             
             # save missing dates to folder name into dict
             missing_dates_dic[subfolder] = missing_dates
@@ -156,8 +189,10 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         # for each company
         for subfolder in subfolders:
             # find search term for company in search term df
-            search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
             
+            
+            search_name = search_terms_companies[search_terms_companies.index == subfolder.split("_")[0]].search_term.item()
+
             # set up first part of search term (without dates)
             search_term1 = f"{search_name} min_retweets:{min_retweets} lang:{lang}"
             
@@ -182,7 +217,7 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
         search_term1 = f"min_retweets:{min_retweets} lang:{lang}"
         # go thru datelist and scrape once for each day
         search_term_list = []
-        for date in missing_dates_dic[subfolder]:
+        for date in missing_dates_dic[folder]:
                 date1 = (date + pd.Timedelta(days = 1)).date()
                 date2 = date.date()
                 
@@ -202,46 +237,61 @@ for folder in [k for k in folders if k in company_folders or k in nofilter_folde
 #search_term_dict_test = dict(random.sample(search_term_dict.items(), 2))
 
 for key,value in search_term_dict.items():
-    print(key)
-    #print(key, value)
-    # check if key (folder name) is not in nofilter folder --> company folder
-    if key not in nofilter_folders:
-        limit = 5000
-    else: # --> nofilter folder
-        limit = int(info_df.loc[info_df["folder"] == key, "limit"].values[0])
+    # retry 10 times in case of html token error
+    print(f"Started working on {key}")
+    for attempt in range(10):
         
-    search_dict = search_term_dict[key]
-    for search_term in search_dict:
-        print(f"Working on {search_term}")
-        # set up scraper
-        config = twint.Config() 
-        # search for search terms in dict
-        config.Search = search_term
-        # store results
-        config.Store_object = True 
-        
-        # store data as json
-        config.Store_json = True
-        
-        # set limit for number of tweets scraped per search
-        config.Limit = limit
-        
-        # extract date info from search term for saving
-        date2 = search_term.split("since:")[1]
-        # define where to save output
-        # first for company folders
-        if key not in nofilter_folders:
-            # here check if german or english company folder
-            country_code = key.split("_")[1]
-            config.Output = os.path.join(path,"Companies" + "_" + country_code,
-                                         key, key.split("_")[0] + "_" +
-                                         str(date2) + "_" + 
-                                         country_code + ".json")
-        # then for no filter folders
+        try:
+            print(f"Attempt: {attempt})")
+            #print(key, value)
+            # check if key (folder name) is not in nofilter folder --> company folder
+            if key not in nofilter_folders:
+                limit = 5000
+            else: # --> nofilter folder
+                limit = int(info_df.loc[info_df["folder"] == key, "limit"].values[0])
+                
+            search_dict = search_term_dict[key]
+            for search_term in search_dict:
+                print(f"Scraping tweets for search term: {search_term}")
+                # set up scraper
+                config = twint.Config() 
+                # search for search terms in dict
+                config.Search = search_term
+                # store results
+                config.Store_object = True 
+                
+                # store data as json
+                config.Store_json = True
+                
+                # set limit for number of tweets scraped per search
+                config.Limit = limit
+                
+                # extract date info from search term for saving
+                date2 = search_term.split("since:")[1]
+                # define where to save output
+                # first for company folders
+                if key not in nofilter_folders:
+                    # here check if german or english company folder
+                    country_code = key.split("_")[1]
+                    config.Output = os.path.join(path,"Companies" + "_" + country_code,
+                                                 key, key.split("_")[0] + "_" +
+                                                 str(date2) + "_" + 
+                                                 country_code + ".json")
+                # then for no filter folders
+                else:
+                    config.Output = os.path.join(path, key,
+                                                 key + "_" + str(date2) + ".json")
+                # dont show tweets being scraped in console    
+                config.Hide_output = True
+                #run twitter search
+                twint.run.Search(config) 
+        except:
+              error_sleep = 60
+              print(f"Encountered problem going to {error_sleep} seconds to sleep and will then retry.")
+              time.sleep(60)
+              continue
         else:
-            config.Output = os.path.join(path, key,
-                                         key + "_" + str(date2) + ".json")
-            
-            
-        #run twitter search
-        twint.run.Search(config) 
+            print("Breaking after too many fails.")
+            break
+    else:
+        print("Too many errors")

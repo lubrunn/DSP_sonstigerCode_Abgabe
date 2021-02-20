@@ -1,5 +1,5 @@
 import os
-os.chdir(r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data\company_de")
+os.chdir(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw_test\tweets_per_day_test\Companies_en")
 import pandas as pd
 
 

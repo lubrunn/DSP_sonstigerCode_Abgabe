@@ -1,12 +1,13 @@
 if(!require("corpus")) install.packages("corpus")
 if(!require("hunspell")) install.packages("hunspell")
+# install.packages("stopwords")
 
 library(tidyverse)
 
 library(jsonlite)
 
 
-library(tm)
+
 
 library(tidytext)
 
@@ -18,59 +19,80 @@ library(qdap)
 
 library(textclean)
 
-library(corpus)
+
 library(hunspell)
 
 #### read in data
-setwd("C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/raw_test")
-filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-11-30.json"
-test_data_nof_1 <- jsonlite::stream_in(file(filename))
-filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-12-01.json"
-test_data_nof_2 <- jsonlite::stream_in(file(filename))
+# setwd("C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/raw_test")
+# filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-11-30.json"
+# test_data_nof_1 <- jsonlite::stream_in(file(filename))
+# filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-12-01.json"
+# test_data_nof_2 <- jsonlite::stream_in(file(filename))
+# 
+# test_data_nofilter <- rbind(test_data_nof_1, test_data_nof_2)
+# test_data_nofilter$search_term <- ""
+# 
+# filename <- "Companies_de/3M_de/3M_2018-11-30_de.json"
+# test_data1 <- jsonlite::stream_in(file(filename))
+# filename <- "Companies_de/3M_de/3M_2018-12-01_de.json"
+# test_data2 <- jsonlite::stream_in(file(filename))
+# filename <- "Companies_de/adidas_de/adidas_2018-11-30_de.json"
+# test_data3 <- jsonlite::stream_in(file(filename))
+# filename <- "Companies_de/adidas_de/adidas_2018-12-01_de.json"
+# test_data4 <- jsonlite::stream_in(file(filename))
+# 
+# # add search term column
+# test_data1$search_term <- "3M"
+# test_data2$search_term <- "3m"
+# test_data3$search_term <- "adidas"
+# test_data4$search_term <- "adidas"
+# 
+# test_data_comp <- rbind(test_data1, test_data2, test_data3, test_data4)
 
-test_data_nofilter <- rbind(test_data_nof_1, test_data_nof_2)
-test_data_nofilter$search_term <- ""
 
-filename <- "Companies_de/3M_de/3M_2018-11-30_de.json"
-test_data1 <- jsonlite::stream_in(file(filename))
-filename <- "Companies_de/3M_de/3M_2018-12-01_de.json"
-test_data2 <- jsonlite::stream_in(file(filename))
-filename <- "Companies_de/adidas_de/adidas_2018-11-30_de.json"
-test_data3 <- jsonlite::stream_in(file(filename))
-filename <- "Companies_de/adidas_de/adidas_2018-12-01_de.json"
-test_data4 <- jsonlite::stream_in(file(filename))
-
-# add search term column
-test_data1$search_term <- "3M"
-test_data2$search_term <- "3m"
-test_data3$search_term <- "adidas"
-test_data4$search_term <- "adidas"
-
-test_data_comp <- rbind(test_data1, test_data2, test_data3, test_data4)
-
-
-# add to df to one
-tweets_raw <- rbind(test_data_comp, test_data_nofilter)
-rm(test_data_nof_1, test_data_nof_2,
-   test_data1, test_data2, test_data3, test_data4,
-   filename, test_data_nofilter, test_data_comp)
+# # add to df to one
+# tweets_raw <- rbind(test_data_comp, test_data_nofilter)
+# rm(test_data_nof_1, test_data_nof_2,
+#    test_data1, test_data2, test_data3, test_data4,
+#    filename, test_data_nofilter, test_data_comp)
 
 # only one file
  
-tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2018-12-07.json)"))
+tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
 
 #a <- head(tweets_raw, 1000)
 
 # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
 tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at, 
-                                user_id, place, language, replies_count, 
-                                retweets_count, likes_count, retweet)
+                                user_id, username, hashtags,
+                                place, language, replies_count, 
+                                retweets_count, likes_count)
+
+### remove tweets that are not in correct language
+tweets <- tweets %>% filter(language == "en")
+
+### remove duplicates
+tweet_u <- tweets[duplicated(tweets$doc_id), ]
 
 # testing with single tweet
 #tweets <- tweets[1,]
-#tweets$text <- "Mr. Jones don't can't shouldn't haven't @twitter_user123 it's soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
+# tweets$text <- "Mr. Jones &amp; Jones Jones don't don't can't shouldn't haven't @twitter_user123 it's so soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
+
+tweets$text <- text_tokens(tweets$text)
+
+# function that removes consecutive duplicates
+dup_remover <- function(string){
+  
+  string <- paste(rle(unlist(string))$values, collapse = " ")
+  return(string)
+}
+
+tweets$text <- sapply(tweets$text, dup_remover)
 
 
+
+
+###
 tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
 
 
@@ -158,9 +180,20 @@ stem_hunspell <- function(term) {
   stem
 }
 tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
+
+
+
+
 # collapse text column list to one string again
-tweets <-tweets %>% rowwise() %>% 
+tweets <-tweets %>% rowwise() %>%
   mutate(text = paste(text, collapse=' ')) %>%
+  ungroup()
+
+
+## same for hashtags
+# collapse text column list to one string again
+tweets <-tweets %>% rowwise() %>%
+  mutate(hashtags = paste(hashtags, collapse=' ')) %>%
   ungroup()
 
 
@@ -174,21 +207,76 @@ tweets <- unnest_wider(tweets, place) %>%
 
 
 
-# remove stopwords
-tweets$text <- removeWords(tweets$text,stopwords("SMART"))
+# remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
+# e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
+tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
+                                         stopwords::stopwords("en", "snowball"),
+                                         stopwords::stopwords("en", "nltk"),
+                                         "face",
+                                         "amp",
+                                         "make"))
 
 # remove whitespace again
 #get rid of unnecessary white spaces
 tweets$text <- stringr::str_squish(tweets$text)
 
 
+# save created at as date instead of datetime
+# tweets$created_at <- as.character(as.Date(tweets$created_at))
 
+# check how much data can be saved by removing columns
+tweets_orig <- tweets
+
+
+# tweets <- tweets_orig %>% select(
+#   doc_id, text, created_at, language,
+#   retweets_count, likes_count
+# )
 
 #######################################
 #### save cleaned file
 ######################################
+# parquetfile
+path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-04-01_cleaned.parquet"
+arrow::write_parquet(tweets, path2)
+
+
+# 1st feather format
 path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
 feather::write_feather(tweets, path)
+
+# different feather format
+path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
+arrow::write_feather(tweets, path1)
+
+
+
+# parquet file with two tweet dfs
+tweets2 <- rbind(tweets, tweets)
+path22 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned32.parquet"
+arrow::write_parquet(tweets2, path22)
+
+# with 80k tweets
+tweets3 <- rbind(tweets2, tweets2)
+path23 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned33.parquet"
+arrow::write_parquet(tweets3, path23)
+
+# with 160k tweets
+tweets4 <- rbind(tweets3, tweets3)
+path24 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned34.parquet"
+arrow::write_parquet(tweets4, path24)
+
+
+#160 mio tweets
+tweets6 <- purrr::map_dfr(seq_len(1000), ~tweets4)
+path25 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned35.parquet"
+arrow::write_parquet(tweets6, path25)
+
+
+# save as csv as reference
+path3 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned4.csv"
+write.csv(tweets, path3)
+
 
 
 
