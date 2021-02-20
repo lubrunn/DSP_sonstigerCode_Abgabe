@@ -5,7 +5,7 @@ if(!require("hunspell")) install.packages("hunspell")
 library(tidyverse)
 
 library(jsonlite)
-
+library(arrow) # read feather files
 
 
 
@@ -22,57 +22,23 @@ library(textclean)
 
 library(hunspell)
 
-#### read in data
-# setwd("C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/raw_test")
-# filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-11-30.json"
-# test_data_nof_1 <- jsonlite::stream_in(file(filename))
-# filename <- "De_NoFilter_min_retweets_2/De_NoFilter_min_retweets_2_2018-12-01.json"
-# test_data_nof_2 <- jsonlite::stream_in(file(filename))
-# 
-# test_data_nofilter <- rbind(test_data_nof_1, test_data_nof_2)
-# test_data_nofilter$search_term <- ""
-# 
-# filename <- "Companies_de/3M_de/3M_2018-11-30_de.json"
-# test_data1 <- jsonlite::stream_in(file(filename))
-# filename <- "Companies_de/3M_de/3M_2018-12-01_de.json"
-# test_data2 <- jsonlite::stream_in(file(filename))
-# filename <- "Companies_de/adidas_de/adidas_2018-11-30_de.json"
-# test_data3 <- jsonlite::stream_in(file(filename))
-# filename <- "Companies_de/adidas_de/adidas_2018-12-01_de.json"
-# test_data4 <- jsonlite::stream_in(file(filename))
-# 
-# # add search term column
-# test_data1$search_term <- "3M"
-# test_data2$search_term <- "3m"
-# test_data3$search_term <- "adidas"
-# test_data4$search_term <- "adidas"
-# 
-# test_data_comp <- rbind(test_data1, test_data2, test_data3, test_data4)
 
+# read in data
+setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
+# tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
 
-# # add to df to one
-# tweets_raw <- rbind(test_data_comp, test_data_nofilter)
-# rm(test_data_nof_1, test_data_nof_2,
-#    test_data1, test_data2, test_data3, test_data4,
-#    filename, test_data_nofilter, test_data_comp)
+path <- "raw_feather/En_NoFilter"
 
-# only one file
- 
-tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
+files <- list.files(path)
+file <- files[1]
+tweets_raw <- arrow::read_feather(file.path(path, file))
 
 #a <- head(tweets_raw, 1000)
 
 # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
-tweets <- tweets_raw %>% select("doc_id" = id, "text" =  tweet, created_at, 
-                                user_id, username, hashtags,
-                                place, language, replies_count, 
-                                retweets_count, likes_count)
+tweets <- tweets_raw %>% rename("doc_id" = id, "text" =  tweet)
 
-### remove tweets that are not in correct language
-tweets <- tweets %>% filter(language == "en")
 
-### remove duplicates
-tweet_u <- tweets[duplicated(tweets$doc_id), ]
 
 # testing with single tweet
 #tweets <- tweets[1,]
