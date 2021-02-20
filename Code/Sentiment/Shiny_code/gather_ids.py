@@ -6,13 +6,12 @@ os.chdir(r"C:\Users\simon\Documents\GitHub\DSP_Sentiment_Covid\Code\Sentiment\Sh
 import pandas as pd
 from get_date import date_finder
 from id_finder import id_finder
+from tweet_collector import tweet_collector
 import pyarrow.feather as feather
 import numpy as np
 import json
                
-# initialize empty dataframe
-df = pd.DataFrame(list())
-df.to_csv(r"C:\Users\simon\OneDrive - UT Cloud\Eigene Dateien\Data\Twitter\sentiment\Tweet_Ids\IDs.csv")
+#C:\Users\simon\OneDrive - UT Cloud\Eigene Dateien\Data\Twitter\sentiment\Shiny_files_companies
 
 # path to company and non-specific tweets
 path_1 = r"C:\Users\simon\OneDrive - UT Cloud\Eigene Dateien\Data\Twitter\raw"
