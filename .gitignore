@@ -10,3 +10,4 @@ Code/Twitter Descriptive/testing/test_load_file_json.R
 Code/Twitter/twint_ohne_loop.py
 Code/Sentiment/Shiny_code/__pycache__/tweet_collector.cpython-37.pyc
 Code/Sentiment/Shiny_code/__pycache__/get_date.cpython-37.pyc
+Code/Twitter Descriptive/repalce_emojis.py
