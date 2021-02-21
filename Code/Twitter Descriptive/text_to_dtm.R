@@ -28,9 +28,10 @@ long <- 80
 for (folder in folders){
   if (grepl("Companies", folder)) {
     source_main <- file.path("cleaned", folder)
-    company_folders <- list.files(source)
+    company_folders <- list.files(source_main)
     
     for (company_folder in company_folders){
+      source <- file.path("cleaned", folder, company_folder)
       dest <- file.path("term_freq", folder, company_folder)
       # if folder doesnt exist, create it
       dir.create(dest, showWarnings = FALSE)
