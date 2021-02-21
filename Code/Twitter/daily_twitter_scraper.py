@@ -11,7 +11,7 @@ import time
 
 
 # vpc or local?
-vpc = False
+vpc = True
 #%% set path were all the data is
 
 if vpc == True:

@@ -1,5 +1,5 @@
 import os
-os.chdir(r"C:\Users\lukas\OneDrive - UT Cloud\Data\twitter")
+os.chdir(r"/home/lukasbrunner/share/onedrive/Data/Twitter")
 import json
 import pandas as pd
 import re
@@ -9,7 +9,7 @@ import swifter
 #import pyarrow
 
 import demoji
-#demoji.download_codes()
+# demoji.download_codes()
 
 #%%
         
@@ -56,7 +56,7 @@ def df_cleaner(df):
     return df
 
 #%% get folder names
-source = "raw_test"
+source = "raw"
 dest = "raw_csv"
 dest_cleaned = "pre_cleaned"
 folders_all = [k for k in os.listdir(source) if "Comp" in k or "Filter" in k]
@@ -178,11 +178,12 @@ for lang in lang_folders:
         
     # go thru all dates
     for date in date_list_needed:
+        
         # set up list
         tweets = []
         #go into each folder folders an concat tweets to df
         for folder in folders:
-            
+            print(f"Working on {date} in {folder}")
             # create filename from fodler name together wit date
             filename = f"{folder}_{date}.json"
             # create path
@@ -200,7 +201,7 @@ for lang in lang_folders:
         
         
         
-        new_filename = f"{lang}_NoFilter_{date}.feather"
+        # create new filename
         new_filename_csv = f"{lang}_NoFilter_{date}.csv"
         
         # save df
