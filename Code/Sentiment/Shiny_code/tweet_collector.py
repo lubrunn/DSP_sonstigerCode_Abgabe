@@ -44,8 +44,8 @@ def tweet_collector(retweet,lan,date_range_input,path_raw,date_list,folder,subfo
             tweets = []
             
             try:
-                            for line in open(path, 'r',encoding="utf8"):
-                                tweets.append(json.loads(line,parse_int=str))
+                    for line in open(path, 'r',encoding="utf8"):
+                        tweets.append(json.loads(line,parse_int=str))      
             except OSError:
                 continue
             
