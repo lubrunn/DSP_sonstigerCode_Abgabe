@@ -28,13 +28,16 @@ library(hunspell)
 setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 # tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
 
-path <- "raw_feather/En_NoFilter"
+path <- "raw_csv/En_NoFilter"
 
 
 time1 <- Sys.time()
 files <- list.files(path)
 file <- files[1]
-tweets_raw <- arrow::read_feather(file.path(path, file))
+tweets_raw <- read_csv(file.path(path,file),
+                       col_types = cols(.default = "c", lat = "d", long = "d",
+                                             retweets_count = "i", replies_count = "i",
+                                             likes_count = "i", tweet_length = "i"))
 
 #a <- head(tweets_raw, 1000)
 
@@ -67,12 +70,12 @@ tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
 
 
 ### convert all tweets to lower case
+time2 <- Sys.time()
 tweets$text <- tolower(tweets$text)
-
+print(Sys.time() - time2)
 
 #a <- head(tweets, 1000)
-#remove urls
-tweets$text <- qdapRegex::rm_twitter_url(tweets$text)
+
 
 
 
@@ -90,9 +93,13 @@ print(Sys.time() - time2)
 # replace haven't because replace_contractions does not
 tweets$text <- gsub("haven't", "have not", tweets$text)
 #noooooooooooo becomes no
+time2 <- Sys.time()
 tweets$text <- replace_word_elongation(tweets$text) 
+print(Sys.time() - time2)
 #remove email adresses
+time2 <- Sys.time()
 tweets$text <- replace_email(tweets$text) 
+print(Sys.time() - time2)
 
 #replaces emoticons
 time2 <- Sys.time()
@@ -100,11 +107,15 @@ tweets$text <- replace_emoticon(tweets$text)
 print(Sys.time() - time2)
 
 #removes html markup: &euro becomes euro
+time2 <- Sys.time()
 tweets$text <- replace_html(tweets$text) 
+print(Sys.time() - time2)
 # C+ becomes slighlty above average
 tweets$text <- replace_grade(tweets$text) 
 #lol = laughing out loud
+time2 <- Sys.time()
 tweets$text <- replace_internet_slang(tweets$text)
+print(Sys.time() - time2)
 
 #replaces emojis with text representations
 time2 <- Sys.time()
@@ -112,15 +123,21 @@ tweets$textN <- replace_emoji(tweets$text)
 print(Sys.time() - time2)
 
 #replaces with a unique identifier that corresponds to lexicon::hash_sentiment_emoji
-tweets$text <- replace_emoji_identifier(tweets$text) 
+# already done in python
+# tweets$text <- replace_emoji_identifier(tweets$text) 
 #removes chracter strings with non-ASCII chracters
+time2 <- Sys.time()
 tweets$text <- replace_non_ascii(tweets$text) 
-#removes twitter handles
-tweets$text <- replace_tag(tweets$text) 
+print(Sys.time() - time2)
+
+#removes twitter handles, already done in python
+# tweets$text <- replace_tag(tweets$text) 
+
 #0/10 becomes terrible, 5 stars becomes best
 tweets$text <- replace_rating(tweets$text) 
-#removes urls from text
-tweets$text <- replace_url(tweets$text) 
+
+#removes urls from text already done in python
+# tweets$text <- replace_url(tweets$text) 
 #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
 tweets$text <- replace_white(tweets$text) 
 ### convert all tweets to lower case
@@ -130,21 +147,18 @@ tweets$text <- tolower(tweets$text)
 #adds space after comma so later one,two,three does not become onetwothree
 tweets$text <- add_comma_space(tweets$text) 
 
-# remove twitter handles
-# tweets$text <- gsub("@\\w+", "", tweets$text)
+
 
 # Get rid of hashtags
+time2 <- Sys.time()
 tweets$text <- str_replace_all(tweets$text,"#[a-z,A-Z]*","")
+print(Sys.time() - time2)
+
 
 #remove special , note: this also removes emojis
 tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
 
 
-# Get rid of references to other screennames
-#tweets$tweet <- str_replace_all(tweets$tweet,"@[a-z,A-Z]*","") 
-
-#get rid of unnecessary white spaces
-tweets$text <- stringr::str_squish(tweets$text)
 
 ######### stemming
 stem_hunspell <- function(term) {
@@ -178,12 +192,12 @@ tweets <-tweets %>% rowwise() %>%
 
 
 ###### place column contains lists
-# move coordinates into two lat/long columns
-tweets <- unnest_wider(tweets, place) %>%
-  select(-c("...1", "type")) %>%
-  mutate_all(list(~na_if(.,"NULL"))) %>%
-  unnest_wider(coordinates) %>%
-  rename( "lat" = "...1", "long" = "...2" )
+# move coordinates into two lat/long columns, already done in python
+# tweets <- unnest_wider(tweets, place) %>%
+#   select(-c("...1", "type")) %>%
+#   mutate_all(list(~na_if(.,"NULL"))) %>%
+#   unnest_wider(coordinates) %>%
+#   rename( "lat" = "...1", "long" = "...2" )
 
 
 
@@ -194,13 +208,16 @@ tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
                                          stopwords::stopwords("en", "nltk"),
                                          "face",
                                          "amp",
-                                         "make"))
+                                         "make",
+                                         "gt"))
 
 # remove whitespace again
 #get rid of unnecessary white spaces
 tweets$text <- stringr::str_squish(tweets$text)
 
 
+# include dummy term when tweet longer than median
+tweets$long_tweet <- ifelse(tweets$text_length > 80, 1, 0)
 
 print(glue("The process took {Sys.time() - time1}"))
 # save created at as date instead of datetime
