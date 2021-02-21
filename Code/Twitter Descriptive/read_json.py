@@ -128,7 +128,11 @@ subfolder = [k for k in en_folders if k != folder][0]
 def remove_light(text):
         reference_pattern = re.compile(r"\@\w+|\@\w+\'|\@\w+\’|<.*?>|https?://\S+|www\.\S+|\d+\.|\d+|\#|\&amp|RT")
         return reference_pattern.sub(r'', text)
-    
+
+print(remove_light('''Everybody in the UK is flipping out over a video of some 
+                   dude picking up a mace, and I cannot for the life of me 
+                   understand why.   Is it because you’re playing by 1st ed. 
+                   rules and he’s not a cleric?'''))
 
    
 
@@ -197,8 +201,14 @@ for lang in lang_folders:
         # get length of each tweet
         df["tweet_length"] = length_checker(df["tweet"])
         
+        # convert tweet_length to object
+        df["tweet_length"] = df["tweet_length"].astype("object")
+        
+        
         
         new_filename = f"{lang}_NoFilter_{date}.feather"
+        new_filename_csv = f"{lang}_NoFilter_{date}.csv"
         # version 1.0 for readability in R
-        df.to_feather(os.path.join(dest, f"{lang}_NoFilter",new_filename),
-                      version="1.0")
+        df.to_feather(os.path.join(dest, f"{lang}_NoFilter",new_filename))
+        df.to_csv(os.path.join(dest, f"{lang}_NoFilter",new_filename_csv),
+                  index = False)
