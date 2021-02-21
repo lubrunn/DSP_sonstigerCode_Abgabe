@@ -2,10 +2,10 @@ if(!require("corpus")) install.packages("corpus")
 if(!require("hunspell")) install.packages("hunspell")
 # install.packages("stopwords")
 
-library(tidyverse)
+#library(tidyverse)
 
+library(dplyr)
 
-library(arrow) # read feather files
 
 
 
@@ -13,19 +13,20 @@ library(tidytext)
 
 
 #install.packages('rJava')
-library('rJava')
+#library('rJava')
 
-library(qdap)
+#library(qdap)
 
 library(textclean)
 
 
 library(hunspell)
-
+library(readr)
+library(corpus)
 
 
 # read in data
-setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
+setwd("/home/lukasbrunner/share/onedrive/Data/Twitter")
 # tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
 
 path <- "raw_csv/En_NoFilter"
@@ -34,10 +35,10 @@ path <- "raw_csv/En_NoFilter"
 time1 <- Sys.time()
 files <- list.files(path)
 file <- files[1]
-tweets_raw <- read_csv(file.path(path,file),
-                       col_types = cols(.default = "c", lat = "d", long = "d",
-                                             retweets_count = "i", replies_count = "i",
-                                             likes_count = "i", tweet_length = "i"))
+tweets_raw <- readr::read_csv(file.path(path,file),
+                              col_types = cols(.default = "c", lat = "d", long = "d",
+                                               retweets_count = "i", replies_count = "i",
+                                               likes_count = "i", tweet_length = "i"))
 
 #a <- head(tweets_raw, 1000)
 
@@ -51,7 +52,7 @@ tweets <- tweets_raw %>% rename("doc_id" = id, "text" =  tweet)
 #tweets <- tweets[1,]
 # tweets$text <- "Mr. Jones &amp; Jones Jones don't don't can't shouldn't haven't @twitter_user123 it's so soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
 
-tweets$text <- text_tokens(tweets$text)
+tweets$text <- corpus::text_tokens(tweets$text)
 
 # function that removes consecutive duplicates
 dup_remover <- function(string){
@@ -84,7 +85,7 @@ print(Sys.time() - time2)
 # does not work for these cases)
 tweets$text <- gsub("’", "'", tweets$text)
 #Mr. = Mister
-tweets$text <- replace_abbreviation(tweets$text)  
+# tweets$text <- qdap::replace_abbreviation(tweets$text)  
 # it's = it is
 time2 <- Sys.time()
 tweets$text <- replace_contraction(tweets$text)
@@ -117,10 +118,8 @@ time2 <- Sys.time()
 tweets$text <- replace_internet_slang(tweets$text)
 print(Sys.time() - time2)
 
-#replaces emojis with text representations
-time2 <- Sys.time()
-tweets$textN <- replace_emoji(tweets$text) 
-print(Sys.time() - time2)
+
+
 
 #replaces with a unique identifier that corresponds to lexicon::hash_sentiment_emoji
 # already done in python
@@ -151,7 +150,7 @@ tweets$text <- add_comma_space(tweets$text)
 
 # Get rid of hashtags
 time2 <- Sys.time()
-tweets$text <- str_replace_all(tweets$text,"#[a-z,A-Z]*","")
+tweets$text <- stringr::str_replace_all(tweets$text,"#[a-z,A-Z]*","")
 print(Sys.time() - time2)
 
 
@@ -173,10 +172,19 @@ stem_hunspell <- function(term) {
   
   stem
 }
-tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
 
 
 
+# check if text column converted to list, then one knows that funciton run without errors
+# otherwise c++ error may appear which does not abort function but simply does nothing
+
+# try 5 times
+for (i in 1:5){
+  if (class(tweets$text) == "character"){
+    print(paste0("Attempt",i))
+    tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
+  }
+}
 
 # collapse text column list to one string again
 tweets <-tweets %>% rowwise() %>%
@@ -184,20 +192,16 @@ tweets <-tweets %>% rowwise() %>%
   ungroup()
 
 
-## same for hashtags
+
+
+## spread hashtags
 # collapse text column list to one string again
 tweets <-tweets %>% rowwise() %>%
   mutate(hashtags = paste(hashtags, collapse=' ')) %>%
   ungroup()
 
 
-###### place column contains lists
-# move coordinates into two lat/long columns, already done in python
-# tweets <- unnest_wider(tweets, place) %>%
-#   select(-c("...1", "type")) %>%
-#   mutate_all(list(~na_if(.,"NULL"))) %>%
-#   unnest_wider(coordinates) %>%
-#   rename( "lat" = "...1", "long" = "...2" )
+
 
 
 
@@ -223,63 +227,16 @@ print(glue("The process took {Sys.time() - time1}"))
 # save created at as date instead of datetime
 # tweets$created_at <- as.character(as.Date(tweets$created_at))
 
-# check how much data can be saved by removing columns
-tweets_orig <- tweets
 
 
-# tweets <- tweets_orig %>% select(
-#   doc_id, text, created_at, language,
-#   retweets_count, likes_count
-# )
+
+
 
 #######################################
 #### save cleaned file
 ######################################
 # parquetfile
-path_save = "C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/text_cleaned/En_NoFilter/En_NoFilter_2020-04-01_cleaned.parquet"
-arrow::write_parquet(tweets, path_save)
+path_save = "C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/text_cleaned/En_NoFilter/En_NoFilter_2020-04-01_cleaned.csv"
+readr::write_csv(tweets, path_save)
 
 
-# # 1st feather format
-# path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
-# feather::write_feather(tweets, path)
-# 
-# # different feather format
-# path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
-# arrow::write_feather(tweets, path1)
-# 
-# 
-# 
-# # parquet file with two tweet dfs
-# tweets2 <- rbind(tweets, tweets)
-# path22 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned32.parquet"
-# arrow::write_parquet(tweets2, path22)
-# 
-# # with 80k tweets
-# tweets3 <- rbind(tweets2, tweets2)
-# path23 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned33.parquet"
-# arrow::write_parquet(tweets3, path23)
-# 
-# # with 160k tweets
-# tweets4 <- rbind(tweets3, tweets3)
-# path24 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned34.parquet"
-# arrow::write_parquet(tweets4, path24)
-# 
-# 
-# #160 mio tweets
-# tweets6 <- purrr::map_dfr(seq_len(1000), ~tweets4)
-# path25 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned35.parquet"
-# arrow::write_parquet(tweets6, path25)
-# 
-# 
-# # save as csv as reference
-# path3 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned4.csv"
-# write.csv(tweets, path3)
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
