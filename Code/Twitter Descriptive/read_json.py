@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Feb 21 20:23:39 2021
-
-@author: lukas
-"""
-
-
-import os
-os.chdir(r"C:\Users\lukas\OneDrive - UT Cloud\Data\twitter")
+# vpc or local?
+vpc = False
+#%% set path were all the data is
+if vpc == True:
+    working_dir = "/home/lukasbrunner/share/onedrive/Data/Twitter"
+else:
+    working_dir = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
+    
+    import os
+os.chdir(working_dir)
 import json
 import pandas as pd
 import re
