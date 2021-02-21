@@ -81,11 +81,11 @@ term_freq_computer <- function(folder) {
         #set the schema:docs
         docs <- tm::DataframeSource(df)
         # convert to corpus
-        text_corpus <- VCorpus(docs)
+        text_corpus <- tm::VCorpus(docs)
         
-        dtm <- DocumentTermMatrix(text_corpus)
+        dtm <- tm::DocumentTermMatrix(text_corpus)
         #remove sparse words
-        dtm <- removeSparseTerms(dtm, 0.99)
+        dtm <- tm::removeSparseTerms(dtm, 0.99)
         # convert to matrix
         dtm_m <- as.matrix(dtm)
         
