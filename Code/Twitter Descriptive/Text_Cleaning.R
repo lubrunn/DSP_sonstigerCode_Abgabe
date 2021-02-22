@@ -14,7 +14,7 @@ if (vpc == T) {
 }
 
 path_source <- "pre_cleaned"
-path_dest <- "text_cleaned"
+path_dest <- "cleaned"
 
 
 
@@ -45,8 +45,9 @@ for (folder in folders)
       }
       
       # save df
-      path_save = file.path(path_dest, folder, filename, "_cleaned.csv")
-      readr::write_csv(tweets, path_save)
+      
+      path_save <- file.path(path_dest, folder, file)
+      readr::write_csv(df, path_save)
       print("File saved, moving on to next file.")
       
       
@@ -80,8 +81,8 @@ for (folder in folders)
           df <- rbind(df_de, df_en)
           
           # save df
-          path_save = file.path(path_dest, folder, subfolder, filename, "_cleaned.csv")
-          readr::write_csv(tweets, path_save)
+          path_save = file.path(path_dest, folder, subfolder, file)
+          readr::write_csv(df, path_save)
           print("File saved, moving on to next file.")
         
         
@@ -102,7 +103,7 @@ for (folder in folders)
 }
 
 
-#a <- head(tweets_raw, 1000)
+
 
 # function that removes consecutive duplicates
 dup_remover <- function(string){
