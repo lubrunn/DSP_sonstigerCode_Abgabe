@@ -6,7 +6,7 @@ if vpc == True:
 else:
     working_dir = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
     
-    import os
+import os
 os.chdir(working_dir)
 import json
 import pandas as pd
@@ -115,7 +115,7 @@ for subfolder in subfolders:
     # now go into each company folder in the source an concat files from same day together
     # for this need to check if files exist in both and control for it
     files_de = os.listdir(os.path.join(source, "Companies_de", f"{subfolder}_de"))
-    files_en = os.listdir(os.path.join(source, f"Companies_en", f"{subfolder}_en"))
+    files_en = os.listdir(os.path.join(source, "Companies_en", f"{subfolder}_en"))
     
 
     # get the dates available in both datasets
@@ -315,8 +315,9 @@ for lang in lang_folders:
             path1 = os.path.join(source, folder, filename)
             
             # load json files
-            for line in open(path1, 'r',encoding="utf8"):
-                tweets.append(json.loads(line,parse_int=str))
+            if filename in os.listdir(path1):
+                for line in open(path1, 'r',encoding="utf8"):
+                    tweets.append(json.loads(line,parse_int=str))
         
         # convert to df
         df = pd.DataFrame(tweets)
