@@ -153,7 +153,7 @@ tweets_section_words <- df %>%
 # filter out uncommon words
 tweets_section_words_filt <- tweets_section_words %>%
   group_by(word) %>%
-  filter(n() >= 75) %>%
+  filter(n() >= 50) %>%
   ungroup()
 
 
@@ -162,7 +162,7 @@ tweets_section_words_filt <- tweets_section_words %>%
 ######################## live #####################
 ###################################################
 # controllable
-tomatch <- c()
+tomatch <- c("")
 threshold <- 0
 min_corr <- 0.2
 
@@ -199,21 +199,29 @@ V(network)$degree <- strength(graph = network)
 
 # Create networkD3 object.
 network.D3 <- igraph_to_networkD3(g = network)
-# Define node size.
-network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degree)
 # Degine color group (I will explore this feature later).
 network.D3$nodes <- network.D3$nodes %>% mutate(Group = 1)
 
-
+# degree is number of adjacent edges --> here we set the size of nodes proportional to the degree
+# i.e. the more adjacent words a nodes has the bigger it will appear
 deg <- degree(network, mode="all")
 network.D3$nodes$size <- deg * 3
-
-
-
 
 # adjust colors of nodes, first is rest, second is main node for word (with group 2)
 ColourScale <- 'd3.scaleOrdinal()
             .range(["#ff2a00" ,"#694489"]);'
+
+
+
+
+# Define node size.
+network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degree)
+
+
+
+network.D3$links
+
+
 
 # doc: https://www.rdocumentation.org/packages/networkD3/versions/0.4/topics/forceNetwork
 forceNetwork(
