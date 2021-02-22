@@ -27,7 +27,7 @@ long <- 0
 
 term_freq_computer <- function(folder) {  
   
-  files <- list.files(source)
+ # files <- list.files(source)
   
   
   
@@ -39,6 +39,7 @@ term_freq_computer <- function(folder) {
       for (long in long_list){
         #loop over each file
         for (file in files){
+          print(glue("Working on {file} for retweets: {retweets}, likes: {likes}, long:{long}"))
           time1 <- Sys.time()
           df <- read_csv(file.path(source,file),
                          col_types = cols_only(doc_id = "c",text = "c",
@@ -68,8 +69,7 @@ term_freq_computer <- function(folder) {
           janitor::row_to_names(row_number = 1) 
         
         # convert to numeric
-        term_frequency_n <- sapply(term_frequency_n, as.numeric) %>% data.frame()
-        
+        term_frequency_n <- sapply(term_frequency_n, as.numeric) %>% t() %>% data.frame() 
         # store number of tweets to created term frequencies
         term_frequency_n$num_tweets <- dim(df)[1]
         
@@ -87,9 +87,10 @@ term_freq_computer <- function(folder) {
         print(Sys.time() - time1)
         }
         # save df
-        filename_new <- glue("term_freq_{folder}_rt_{retweets}_li_{likes}_lo_{long}")
+        print("Saving file")
+        filename_new <- glue("term_freq_{folder}_rt_{retweets}_li_{likes}_lo_{long}.csv")
         dest_path <- file.path(dest, filename_new)
-        write.csv(term_frequency, dest_path)
+        write_csv(term_frequency, dest_path)
         
         
     }
@@ -102,7 +103,8 @@ term_freq_computer <- function(folder) {
 
 
 
-
+folders <- "En_NoFilter"
+files <- files[1:10]
 
 for (folder in folders){
   if (grepl("Companies", folder)) {
