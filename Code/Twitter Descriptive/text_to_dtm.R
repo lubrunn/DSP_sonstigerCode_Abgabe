@@ -14,16 +14,14 @@ likes_list <- c(0, 10, 50, 100, 200)
 retweets_list <- c(0, 10, 50, 100, 200)
 long_list <- c(0,1)
 
-abc <- function(x){
-  print(x * i)
-}
+
 
 #### for testing
 folder <- folders[4]
 file <- files[1]
-retweets <- 10
-likes <- 100
-long <- 80
+retweets <- 0
+likes <- 0
+long <- 0
 
 for (folder in folders){
   if (grepl("Companies", folder)) {
@@ -63,37 +61,41 @@ term_freq_computer <- function(folder) {
       for (long in long_list){
         #loop over each file
         for (file in files){
+          time1 <- Sys.time()
           df <- read_csv(file.path(source,file),
-                         col_types = cols_only(id = "c",tweet = "c",
+                         col_types = cols_only(doc_id = "c",text = "c",
                                                created_at = "c",
                                                retweets_count = "i",
-                                               likes_count = "i", tweet_length = "i")) %>%
-            rename(doc_id = id, text = tweet)
+                                               likes_count = "i", long_tweet = "i")) 
         
         
         df <- df %>% filter(
           likes_count >= likes,
           retweets_count >= retweets,
           #long_tweet == long
-          tweet_length >= long
+          long_tweet >= long
         )
         
-        #set the schema:docs
-        docs <- tm::DataframeSource(df)
-        # convert to corpus
-        text_corpus <- tm::VCorpus(docs)
         
-        dtm <- tm::DocumentTermMatrix(text_corpus)
-        #remove sparse words
-        dtm <- tm::removeSparseTerms(dtm, 0.99)
-        # convert to matrix
-        dtm_m <- as.matrix(dtm)
+        # remove words that dont at least appear in 1% of tweets
+        threshold <- 0.01 * dim(df)[1]
         
         # compute term frequencies for the entire day
-        term_frequency_n <- colSums(dtm_m) %>% t() %>% data.frame()
+        term_frequency_n <-  df %>% 
+          unnest_tokens(word, text) %>%
+          count(word) %>% 
+          filter(n > threshold) %>%
+          arrange(word) %>%
+          t() %>% data.frame() %>%
+          janitor::row_to_names(row_number = 1) 
+        
+        # convert to numeric
+        term_frequency_n <- sapply(term_frequency_n, as.numeric) %>% data.frame()
+        
+        
         
         # add column with date
-        term_frequency_n$date <- str_extract(file, "[0-9]{4}-[0-9]{2}-[0-9]{2}")
+        term_frequency_n$date <- stringr::str_extract(file, "[0-9]{4}-[0-9]{2}-[0-9]{2}")
         
         # append to df
         if  (!exists("term_frequency")) {
@@ -101,16 +103,45 @@ term_freq_computer <- function(folder) {
         } else {
           term_frequency <- dplyr::bind_rows(term_frequency, term_frequency_n)
         }
-        
+        print(Sys.time() - time1)
         }
         # save df
         filename_new <- glue("term_freq_{folder}_rt_{retweets}_li_{likes}_lo_{long}")
         dest_path <- file.path(dest, filename_new)
-        write.csv(df, dest_path)
+        write.csv(term_frequency, dest_path)
+        
+        
     }
   }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
