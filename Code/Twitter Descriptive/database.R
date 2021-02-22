@@ -12,7 +12,7 @@ setwd("C:/Users/lukas/Documents/SQLiteStudio/databases")
 con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
 
 
-dbListTables(con)
+DBI::dbListTables(con)
 
 time1 <- Sys.time()
 db_test <- dbReadTable(con, "test_table2")
@@ -42,10 +42,11 @@ print(Sys.time() - time1)
 
 ### querry from db
 time1 <- Sys.time()
-df_need <- dbGetQuery(con, 'SELECT * FROM test_table2 WHERE "retweets_count" > :x', 
-                      params = list(x = 1))
+df_need <- DBI::dbGetQuery(con, 'SELECT * FROM pairwise_count WHERE "date" > :x and "weight" > :y', 
+                      params = list(x = "2018-11-29",
+                                    y = 50))
 print(Sys.time() -  time1)
 
 
 #disconnect
-dbDisconnect(con)
+DBI::dbDisconnect(con)
