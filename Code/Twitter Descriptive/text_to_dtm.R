@@ -17,35 +17,13 @@ long_list <- c(0,1)
 
 
 #### for testing
-folder <- folders[4]
+folder <- folders[3]
 file <- files[1]
 retweets <- 0
-likes <- 0
+likes <- 5
 long <- 0
 
-for (folder in folders){
-  if (grepl("Companies", folder)) {
-    source_main <- file.path("cleaned", folder)
-    company_folders <- list.files(source_main)
-    
-    for (company_folder in company_folders){
-      source <- file.path("cleaned", folder, company_folder)
-      dest <- file.path("term_freq", folder, company_folder)
-      # if folder doesnt exist, create it
-      dir.create(dest, showWarnings = FALSE)
-      term_freq_computer(company_folder)
-    }
-  } else if (grepl("NoFilter", folder)) {
-    source <- file.path("cleaned", folder)
-    dest <- file.path("term_freq", folder)
-    # if folder doesnt exist, create it
-    dir.create(dest, showWarnings = FALSE)
-    
-    # call function for each nofilter folder
-    term_freq_computer(folder)
-  }
-  
-}
+
 
 term_freq_computer <- function(folder) {  
   
@@ -82,7 +60,7 @@ term_freq_computer <- function(folder) {
         
         # compute term frequencies for the entire day
         term_frequency_n <-  df %>% 
-          unnest_tokens(word, text) %>%
+          tidytext::unnest_tokens(word, text) %>%
           count(word) %>% 
           filter(n > threshold) %>%
           arrange(word) %>%
@@ -91,6 +69,9 @@ term_freq_computer <- function(folder) {
         
         # convert to numeric
         term_frequency_n <- sapply(term_frequency_n, as.numeric) %>% data.frame()
+        
+        # store number of tweets to created term frequencies
+        term_frequency_n$num_tweets <- dim(df)[1]
         
         
         
@@ -123,6 +104,29 @@ term_freq_computer <- function(folder) {
 
 
 
+for (folder in folders){
+  if (grepl("Companies", folder)) {
+    source_main <- file.path("cleaned", folder)
+    company_folders <- list.files(source_main)
+    
+    for (company_folder in company_folders){
+      source <- file.path("cleaned", folder, company_folder)
+      dest <- file.path("term_freq", folder, company_folder)
+      # if folder doesnt exist, create it
+      dir.create(dest, showWarnings = FALSE)
+      term_freq_computer(company_folder)
+    }
+  } else if (grepl("NoFilter", folder)) {
+    source <- file.path("cleaned", folder)
+    dest <- file.path("term_freq", folder)
+    # if folder doesnt exist, create it
+    dir.create(dest, showWarnings = FALSE)
+    
+    # call function for each nofilter folder
+    term_freq_computer(folder)
+  }
+  
+}
 
 
 
@@ -145,58 +149,3 @@ term_freq_computer <- function(folder) {
 
 
 
-# parquet file
-path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-04-01_cleaned.parquet"
-tweets <- arrow::read_parquet(path2)
-
-
-#set the schema:docs
-docs <- tm::DataframeSource(tweets)
-
-
-
-
-#clean_corpus function from datacamp
-# no need already cleaned previously
-# clean_corpus <- function(corpus){
-#         
-#         
-#         corpus <- tm_map(corpus, removeNumbers)
-#         
-#         corpus <- tm_map(corpus, removeWords,
-#                          c(stopwords("SMART"), "amp"))
-#         
-#         return(corpus)
-# }
-
-text_corpus <- VCorpus(docs)
-
-
-
-
-
-
-content(text_corpus[[1]])
-#for standard meta data (including id)
-meta(text_corpus[[1]])
-
-#for all added meta data
-meta(text_corpus[1])
-
-dtm <- DocumentTermMatrix(text_corpus)
-#remove sparse words
-dtm <- removeSparseTerms(dtm, 0.99)
-dtm_m <- as.matrix(dtm)
-
-#check matrix
-dtm_m[1,]
-
-
-
-###########################################
-## filter on meta data e.g. retweets_count
-###########################################
-meta_data <- meta(text_corpus)
-
-# only keep values in dtm where retweets_count > 2
-dtm_m_filt <- dtm_m[meta_data$retweets_count > 1,]
