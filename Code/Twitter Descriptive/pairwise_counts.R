@@ -1,5 +1,5 @@
 
-
+library(tidytext)
 
 
 # network plot
@@ -83,11 +83,12 @@ forceNetwork(
   linkWidth = JS("function(d) { return Math.sqrt(d.value); }"), 
   fontSize = 12,
   zoom = TRUE, 
-  opacityNoHover = 1
+  opacityNoHover = 1,
+  linkDistance = 100
 )
 }
 
-sent_to_network_plot(tweets, 20)
+sent_to_network_plot(df, 75)
 
 
 
@@ -218,31 +219,17 @@ compared two bigram plots
   - very large for small filters
   
 '
-tweets_section_words <- tweets %>%
+tweets_section_words <- df %>%
   unnest_tokens(word, text)
 
 
 word_cors <- tweets_section_words %>%
   group_by(word) %>%
-  filter(n() >= 10) %>% # only keep words that appear at least 20 times
+  filter(n() >= 75) %>% # only keep words that appear at least 20 times
   widyr::pairwise_cor(word, doc_id, sort = TRUE)
 
 
-# show words used with trump
-word_cors %>%
-  filter(item1 == "trump")
 
-# most frequently used word with certain words in list
-word_cors %>%
-  filter(item1 %in% c("covid", "trump", "china")) %>%
-  group_by(item1) %>%
-  top_n(6) %>%
-  ungroup() %>%
-  mutate(item2 = reorder(item2, correlation)) %>%
-  ggplot(aes(item2, correlation)) +
-  geom_bar(stat = "identity") +
-  facet_wrap(~ item1, scales = "free") +
-  coord_flip()
 
 
 
@@ -312,6 +299,22 @@ forceNetwork(
 
 
 
+
+# show words used with trump
+word_cors %>%
+  filter(item1 == "trump")
+
+# most frequently used word with certain words in list
+word_cors %>%
+  filter(item1 %in% c("covid", "trump", "china")) %>%
+  group_by(item1) %>%
+  top_n(6) %>%
+  ungroup() %>%
+  mutate(item2 = reorder(item2, correlation)) %>%
+  ggplot(aes(item2, correlation)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ item1, scales = "free") +
+  coord_flip()
 #################################################################
 ########## same but for only certain terms  #####################
 #################################################################
@@ -423,16 +426,20 @@ this is a nice way to get an overview of tweets involving certain terms
 
 '
 
-tomatch <- c("trump", "covid", "russia")
+tomatch <- c("trump")
 
 # tweets_section_words_a <- tweets %>%
 #   filter(grepl(paste(tomatch, collapse="|"), text)) %>%
 #   unnest_tokens(word, text)
 
 
-tweets_section_words_b <- tweets %>%
+tweets_section_words <- df %>%
   unnest_tokens(word, text) %>%
-  left_join(subset(tweets, select = c(doc_id, text))) %>%
+  left_join(subset(df, select = c(doc_id, text))) 
+
+
+
+tweets_section_words_filt <- tweets_section_words %>%
 filter(grepl(paste(tomatch, collapse="|"), text))
 
 
@@ -448,9 +455,11 @@ filter(grepl(paste(tomatch, collapse="|"), text))
 # b <- tweets_section_words_b %>% filter(doc_id %in% a$doc_id)
 
 
-word_cors <- tweets_section_words %>%
+word_cors_pre <- tweets_section_words %>%
   group_by(word) %>%
-  filter(n() >= 5) %>%
+  filter(n() >= 20)
+
+word_cors <- word_cors_pre %>%
   widyr::pairwise_cor(word, doc_id, sort = TRUE)
 
 
