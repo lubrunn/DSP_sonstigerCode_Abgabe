@@ -18,11 +18,12 @@ path_dest <- "cleaned"
 
 
 
-##### testing
-folder <- folders[3]
-file <- files[1]
 
+# list all folders
 folders <- list.files(path_source)
+
+# select subset of folder
+folders <- c("En_NoFilter")
 
 for (folder in folders)
 {
@@ -412,6 +413,8 @@ df_cleaner_german <- function(df){
   
   
 }
+
+
 
 
 
