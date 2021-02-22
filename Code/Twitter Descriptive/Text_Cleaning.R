@@ -8,7 +8,7 @@ vpc = FALSE
 
 # read in data
 if (vpc == T) {
-  setwd("/home/lukasbrunner/share/onedrive/Data/Twitter")
+  setwd("/home/lukasbrunner/share/onedrive_new/Data/Twitter")
 } else {
   setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 }
@@ -25,11 +25,12 @@ folders <- list.files(path_source)
 # select subset of folder
 folders <- c("En_NoFilter")
 
-for (folder in folders)
-{
-  if (folder %in% c("De_NoFilter", "En_Nofilter")){
+for (folder in folders){
+  if (folder %in% c("De_NoFilter", "En_NoFilter")){
     
-    files <- list.files(file.path(path_source, folder))
+    files_source <- list.files(file.path(path_source, folder))
+    files_dest <- list.files(file.path(path_dest, folder))
+    files <- setdiff(files_source, files_dest)
     
     for (file in files){
       print(glue("Started working on {file}."))
@@ -44,7 +45,7 @@ for (folder in folders)
       } else if (folder == "De_NoFilter"){
         df <- df_cleaner_german(df)
       }
-      
+    }
       # save df
       
       path_save <- file.path(path_dest, folder, file)
@@ -62,7 +63,11 @@ for (folder in folders)
         # if subfolder does not exist at destination create it
         dir.create(file.path(path_dest, folder, subfolder), showWarnings = FALSE)
         
-        files <- list.files(file.path(path_source, folder, subfolder))
+        # find files that are in source but not in destination i.e. find files that still need to be cleaned
+        files_source <- list.files(file.path(path_source, folder, subfolder))
+        files_dest <- list.files(file.path(path_dest, folder, subfolder))
+        
+        files <- setdiff(files_source, files_dest)
         
         for (file in files){
           print(glue("Started working on {file}."))
@@ -101,7 +106,7 @@ for (folder in folders)
     
   }
   }
-}
+
 
 
 
