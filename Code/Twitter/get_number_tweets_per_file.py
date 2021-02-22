@@ -1,5 +1,5 @@
 import os
-os.chdir(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw_test\tweets_per_day_test\Companies_en")
+os.chdir(r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw_test\tweets_per_day_test\Companies_de")
 import pandas as pd
 
 
@@ -20,7 +20,17 @@ for folder in folders:
         df = pd.concat([df, df_series])
 
 #%%
+df_en = df
+df_de = df
+#%%
+df = pd.concat([df_en, df_de])
+
+#%%
 df["number_tweets"] = df["number_tweets"].astype("int64")
+df_de["number_tweets"] = df_de["number_tweets"].astype("int64")
+
+#%% average tweets overall
+print(df_en.describe())
 #%%
 #df_alldays = df.groupby("Location").filter(lambda x: len(x) == 8)
 #%%
