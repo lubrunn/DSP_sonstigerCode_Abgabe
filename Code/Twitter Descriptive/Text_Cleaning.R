@@ -1,7 +1,6 @@
 library(dplyr)
 library(tidytext)
 library(textclean)
-library(hunspell)
 library(readr)
 library(corpus)
 
@@ -40,7 +39,7 @@ for (folder in folders)
       
       # clean dataframe
       if (folder == "En_NoFilter"){
-      df <- df_cleaner_en(df)
+      df <- df_cleaner_english(df)
       } else if (folder == "De_NoFilter"){
         df <- df_cleaner_german(df)
       }
@@ -70,8 +69,15 @@ for (folder in folders)
                                                  retweets_count = "i", replies_count = "i",
                                                  likes_count = "i", tweet_length = "i"))
           
-          # clean dataframe
-          df <- df_cleaner(df)
+          #separete german and englisch tweets
+          df_de <- df %>% filter(language == "de")
+          df_en <- df %>% filter(language == "en")
+          
+          # clean dataframes
+          df_de <- df_cleaner_german(df)
+          df_en <- df_cleaner_english(df)
+          
+          df <- rbind(df_de, df_en)
           
           # save df
           path_save = file.path(path_dest, folder, subfolder, filename, "_cleaned.csv")
@@ -105,7 +111,19 @@ dup_remover <- function(string){
   return(string)
 }
 
-
+# stemming function
+# stem_hunspell <- function(term) {
+#   # look up the term in the dictionary
+#   stems <- hunspell::hunspell_stem(term)[[1]]
+#   
+#   if (length(stems) == 0) { # if there are no stems, use the original term
+#     stem <- term
+#   } else { # if there are multiple stems, use the last one
+#     stem <- stems[[length(stems)]]
+#   }
+#   
+#   stem
+# }
 
 
 
@@ -193,8 +211,10 @@ tweets$text <- add_comma_space(tweets$text)
 # Get rid of hashtags
 tweets$text <- stringr::str_replace_all(tweets$text,"#[a-z,A-Z]*","")
 
-#remove special characters
+#remove special characters and numbers
 tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
+
+
 
 print("Finished with text cleaning, moving on to stemming")
 
@@ -229,7 +249,7 @@ tweets <-tweets %>% rowwise() %>%
 print("Removing stopwords")
 # remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
 # e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
-tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
+tweets$text <- tm::removeWords(tweets$text,c(tm::stopwords("SMART"),
                                          stopwords::stopwords("en", "snowball"),
                                          stopwords::stopwords("en", "nltk"),
                                          "face", #from emoji and emoticon replacement a lot of face terms
@@ -245,7 +265,7 @@ tweets$text <- stringr::str_squish(tweets$text)
 
 
 # include dummy term when tweet longer than median
-tweets$long_tweet <- ifelse(tweets$text_length > 80, 1, 0)
+tweets$long_tweet <- ifelse(tweets$tweet_length > 80, 1, 0)
 
 
 
@@ -300,19 +320,18 @@ df_cleaner_german <- function(df){
   tweets$text <- replace_email(tweets$text) 
   
   
-  #replaces emoticons (emojis already replaced with python because quicker)
-  
-  
-  
   #removes html markup: &euro becomes euro
   tweets$text <- replace_html(tweets$text) 
   
-  # C+ becomes slightly above average
+  
   
   
   #lol = laughing out loud --> lexical based --> not ideal but could not find better lexicon, most other lexicons were to aggressive and made things worse, hence we choose
   # this middle ground
+  tweets$text <- replace_internet_slang(tweets$text)
   
+  # replace emoticons --> translation to english but we think its better than dropping them
+  tweets$text <- replace_emoticon(tweets$text) 
   
   
   #removes character strings with non-ASCII characters
@@ -323,7 +342,7 @@ df_cleaner_german <- function(df){
    
   
   #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
-   
+  tweets$text <- replace_white(tweets$text) 
   
   ### convert all tweets to lower case again because some replacements are in upper case
   tweets$text <- tolower(tweets$text)
@@ -335,32 +354,14 @@ df_cleaner_german <- function(df){
   # Get rid of hashtags
   tweets$text <- stringr::str_replace_all(tweets$text,"#[a-z,A-Z]*","")
   
-  #remove special characters
+  #remove special characters and numbers
   tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
   
   print("Finished with text cleaning, moving on to stemming")
-  
+
   ######### stemming
-  
-  # check if text column converted to list, then one knows that funciton run without errors
-  # otherwise c++ error may appear which does not abort function but simply does nothing
-  
-  # try 5 times
-  
-  
-  
-  r <- NULL
-  attempt <- 0
-  while (is.null(r) && attempt <= 5){
-    print(paste0("Attempt ",attempt, " for stemming"))
-    attemp <- attempt + 1
-    try(
-      r <- text_tokens(tweets$text, stemmer = stem_hunspell)
-    )
-  }
-  tweets$text <- r
-  
-  
+  tweets$text <-  text_tokens(tweets$text, stemmer = "de")
+
   # collapse text column list to one string again
   tweets <-tweets %>% rowwise() %>%
     mutate(text = paste(text, collapse=' ')) %>%
@@ -383,12 +384,12 @@ df_cleaner_german <- function(df){
   print("Removing stopwords")
   # remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
   # e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
-  tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
-                                           stopwords::stopwords("en", "snowball"),
-                                           stopwords::stopwords("en", "nltk"),
-                                           "face", #from emoji and emoticon replacement a lot of face terms
+  tweets$text <- tm::removeWords(tweets$text,c(
+                                           stopwords::stopwords("de", "snowball"),
+                                           stopwords::stopwords("de", "nltk"),
+                                           #"face", #from emoji and emoticon replacement a lot of face terms
                                            "amp", #from html just in case function did not work
-                                           "make", # personal choice 
+                                           #"make", # personal choice 
                                            "gt")) #from html just in case function did not work
   
   # remove whitespace again
@@ -399,7 +400,7 @@ df_cleaner_german <- function(df){
   
   
   # include dummy term when tweet longer than median
-  tweets$long_tweet <- ifelse(tweets$text_length > 80, 1, 0)
+  tweets$long_tweet <- ifelse(tweets$tweet_length > 80, 1, 0)
   
   
   
@@ -413,10 +414,6 @@ df_cleaner_german <- function(df){
 
 
 
-#######################################
-#### save cleaned file
-######################################
-# parquetfile
 
 
 
