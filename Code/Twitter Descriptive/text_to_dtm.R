@@ -10,8 +10,8 @@ setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 folders <- list.files("cleaned")
 
 
-likes_list <- c(0, 50, 100, 200)
-retweets_list <- c(0, 50, 100, 200)
+likes_list <- c(0, 10, 50, 100, 200)
+retweets_list <- c(0, 10, 50, 100, 200)
 long_list <- c(0,1)
 
 abc <- function(x){
