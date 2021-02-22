@@ -2,7 +2,7 @@
 vpc = False
 #%% set path were all the data is
 if vpc == True:
-    working_dir = "/home/lukasbrunner/share/onedrive/Data/Twitter"
+    working_dir = "/home/lukasbrunner/share/onedrive_new/Data/Twitter"
 else:
     working_dir = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter"
     
@@ -77,7 +77,7 @@ def remove_light(text):
 
 
 #%% get folder names
-source = "raw_test"
+source = "raw"
 dest = "raw_csv"
 dest_cleaned = "pre_cleaned"
 folders_all = [k for k in os.listdir(source) if "Comp" in k or "Filter" in k]
@@ -257,7 +257,7 @@ lang_folders = ["En", "De"]
 
 # first get all dates needed
 # for this get files from one folder, have same dates available
-files = os.listdir(os.path.join(source, en_folders[0]))
+files_source = os.listdir(os.path.join(source, en_folders[0]))
 # list of all dates we have data
 dates = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files]
          
@@ -280,9 +280,29 @@ for lang in lang_folders:
     else:
         folders = en_folders
     
+    
+    # find dates that are missing, check for one folder iin source because we assume all have the same dates avaialble
+    files_source = [k for k in os.listdir(os.path.join(source, folders[0])) if ".json" in k]
+    # convert to datelist
+    dates_source = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files_source]
+    
+    # check which files already exist
+    files_dest = [k for k in os.listdir(os.path.join(dest,folders[0])) if ".csv" in k]
+    files_dest_cleaned = [k for k in os.listdir(os.path.join(dest_cleaned,folders[0])) if ".csv" in k]
+    
+    # inner join list and find last date that exists in both
+    files_dest_both = list(set(files_dest) & set(files_dest_cleaned))
+    # convert to datelist
+    dates_dest = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files_dest_both]
+    
+    # find files in source but not dest
+    dates_missing = list(set(dates_source) - set(dates_dest))
+    
+   
+
         
     # go thru all dates
-    for date in date_list_needed:
+    for date in dates_missing:
         
         # set up list
         tweets = []
