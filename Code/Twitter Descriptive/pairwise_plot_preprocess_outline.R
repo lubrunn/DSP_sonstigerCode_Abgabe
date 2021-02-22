@@ -31,13 +31,56 @@ word_pairs <- tweets_section_words %>%
 date <- as.Date(df$created_at[1], "%Y-%m-%d")
 
 # already filter out pairs that only appear 20 times or less in order to reduce size of df
-network_df <- word_pairs  %>%
-  filter(weight > 20) %>%
+word_pairs <- word_pairs  %>%
+  filter(weight > 50) %>%
   mutate(date = as.character(date)) %>%
-  select(date, item1, item2, weight)
+  select(item1, item2, weight, date)
 
 
 print(Sys.time() - time1)
+
+
+
+threshold <- 20
+network <- word_pairs %>%
+  filter(weight > threshold) %>%
+  graph_from_data_frame(directed = FALSE)
+
+# Store the degree.
+V(network)$degree <- strength(graph = network)
+# Compute the weight shares.
+E(network)$width <- E(network)$weight/max(E(network)$weight)
+
+# Create networkD3 object.
+network.D3 <- igraph_to_networkD3(g = network)
+# Define node size.
+network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degree)
+# Degine color group (I will explore this feature later).
+network.D3$nodes <- network.D3$nodes %>% mutate(Group = 1)
+# Define edges width. 
+network.D3$links$Width <- 10*E(network)$width
+
+# adjust nodesize
+deg <- degree(network, mode="all")
+#network.D3$nodes$size <- deg * 3
+
+
+forceNetwork(
+  Links = network.D3$links, 
+  Nodes = network.D3$nodes, 
+  Source = 'source', 
+  Target = 'target',
+  NodeID = 'name',
+  Group = 'Group', 
+  opacity = 0.9,
+  Value = 'Width',
+  Nodesize = 'Degree', 
+  # We input a JavaScript function.
+  linkWidth = JS("function(d) { return Math.sqrt(d.value); }"), 
+  fontSize = 12,
+  zoom = TRUE, 
+  opacityNoHover = 1
+)
 
 # maximum strings length
 max(nchar(network_df$item2))
@@ -110,7 +153,7 @@ tweets_section_words <- df %>%
 # filter out uncommon words
 tweets_section_words_filt <- tweets_section_words %>%
   group_by(word) %>%
-  filter(n() >= 50) %>%
+  filter(n() >= 75) %>%
   ungroup()
 
 
@@ -119,7 +162,7 @@ tweets_section_words_filt <- tweets_section_words %>%
 ######################## live #####################
 ###################################################
 # controllable
-tomatch <- c("trump")
+tomatch <- c()
 threshold <- 0
 min_corr <- 0.2
 
@@ -141,7 +184,7 @@ word_cors <- word_cors_pre %>%
 
 network_pre <-  word_cors %>%
   #filter(item1 %in% c("covid", "trump", "china")) %>%
-  filter(correlation > 0.2) %>% # fix in order to avoid overcrowed plot
+  filter(correlation > 0) %>% # fix in order to avoid overcrowed plot
   filter(correlation > min_corr) # optional
 
 
