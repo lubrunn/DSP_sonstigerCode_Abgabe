@@ -27,7 +27,7 @@ pro here:
   - mehr connections, man sieht connection in beide Richtungen und sieht auch Beziehungen von Woertern die nicht direkt nacheinander kommen
 con bigram:
   - nur consecutive bigram und nicht backwards --> missing info
-on here:
+con here:
   - kann unübersichtlich werden, wenn man es nicht richtig einstellt --> mehr requirements an User oder preprocess
   
 '
