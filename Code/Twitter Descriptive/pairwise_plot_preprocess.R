@@ -3,7 +3,13 @@ library(readr)
 library(networkD3)
 library(igraph)
 library(glue)
+library(ggplot2)
 
+
+################################
+##################### pre
+
+##############################
 # preprocess pairwise plot
 setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/En_NoFilter")
 df <- readr::read_csv("En_NoFilter_2018-11-30.csv", col_types = cols(.default = "c", lat = "d", long = "d",
@@ -86,17 +92,22 @@ df <- head(df_orig, 1000)
 ###################### for specific terms ###########################
 #####################################################################
 
+'
+here show words that frequently appear together within tweets containing specific terms
+
+'
 
 
 ###############################################
 ######################### Pre #################
 ###############################################
+# first tokenize tweets
 tweets_section_words <- df %>%
   select(doc_id, text, created_at) %>%
   tidytext::unnest_tokens(word, text) %>%
   left_join(subset(df, select = c(doc_id, text))) 
 
-
+# filter out uncommon words
 tweets_section_words_filt <- tweets_section_words %>%
   group_by(word) %>%
   filter(n() >= 50) %>%
@@ -108,12 +119,15 @@ tweets_section_words_filt <- tweets_section_words %>%
 ######################## live #####################
 ###################################################
 # controllable
-tomatch <- c()
+tomatch <- c("trump")
 threshold <- 0
 min_corr <- 0.2
+
+# filter out words for tweets in tomatch list
+# also filter for word frew within this filtered df
 word_cors_pre <- tweets_section_words_filt %>%
   # if list provided to specify tweets to look at then extract only those tweets
-  { if (!is.null(tomatch)) filter(grepl(paste(tomatch, collapse="|"), text)) else . } %>%
+  { if (!is.null(tomatch)) filter(., grepl(paste(tomatch, collapse="|"), text)) else . } %>%
   
   group_by(word) %>%
   filter(n() >= threshold)
@@ -193,12 +207,37 @@ forceNetwork(
 
 ####### term freq plots
 
+'
+here show words that frequently appear together with words of interest
+e.g.
+tweets:
+1. this is a tweet about trump and ivanka
+2. this is also a tweet about trump and his daughter
 
+
+--> process here:
+all possible bigrams:
+1.  this is, is this, ..., trump and, trump ivanka,...., ivnaka trump
+2. ...
+
+- keep only bigrams with trump in place 1 of bigram
+- compute correlation of appearances of bigrams were trump is in place 1
+- plot according to coor
+
+  
+
+'
+
+######### controls
+number_words <- 20000
+
+# here only combinations were words of interest appear in item1
+# so bigrams without words are ommitted --> in network plot they are kept
 
 word_cors %>%
-  filter(item1 %in% c("elizabeth", "pounds", "married", "pride")) %>%
+  filter(item1 %in% tomatch) %>%
   group_by(item1) %>%
-  top_n(6) %>%
+  top_n(number_words) %>%
   ungroup() %>%
   mutate(item2 = reorder(item2, correlation)) %>%
   ggplot(aes(item2, correlation)) +
