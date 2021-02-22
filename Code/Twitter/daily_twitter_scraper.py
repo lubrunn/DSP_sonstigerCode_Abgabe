@@ -15,10 +15,10 @@ vpc = False
 #%% set path were all the data is
 
 if vpc == True:
-    path = "/home/lukasbrunner/share/onedrive/Data/Twitter/raw"
+    path = "/home/lukasbrunner/share/onedrive_new/Data/Twitter/raw"
     
     # set path were company search term pkl is
-    path_comp = "/home/lukasbrunner/share/onedrive/Data/Twitter"
+    path_comp = "/home/lukasbrunner/share/onedrive_new/Data/Twitter"
 
 else:
     path = r"C:\Users\lukas\OneDrive - UT Cloud\Data\Twitter\raw"
