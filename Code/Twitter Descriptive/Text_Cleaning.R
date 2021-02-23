@@ -4,6 +4,30 @@ library(textclean)
 library(readr)
 library(corpus)
 
+#################################################################################
+#################################################################################
+
+'
+Here we clean the tweets
+Rough Overview of steps:
+  - replace emojis, emoticons with text
+  - replace ratings with text
+  - remove hashtags, handles, urls, email adresses,
+  - remove extra whitespace
+  - stem tweets 
+  - remove stopwords
+  - save 1 File per day per Main Folder
+
+'
+
+
+
+
+#################################################################################
+#################################################################################
+
+
+### this is simply for easier switching between vpcl and local
 vpc = FALSE
 
 # read in data
@@ -18,10 +42,9 @@ path_dest <- "cleaned"
 
 
 
-
-
-
-
+################################################################################
+############################## Functions #######################################
+################################################################################
 
 
 
@@ -32,7 +55,13 @@ dup_remover <- function(string){
   return(string)
 }
 
-# stemming function
+# stemming function, we use snowball now instead because although hunspell is better it takes
+# very long (5min) per file --> 5 * 820 days * 2 main folders = 5+ days just for stemming
+# snowball takes just few seconds in comparison, so we have a trade off where we prefer speed
+# also hunspell throws c++ errors every once in a while completely randomly which increases
+# time and mistake potential, hence we use snowball instead
+
+
 # stem_hunspell <- function(term) {
 #   # look up the term in the dictionary
 #   stems <- hunspell::hunspell_stem(term)[[1]]
@@ -53,7 +82,7 @@ dup_remover <- function(string){
 
 
 ####################################
-##### Cleaning Function for german tweets
+##### Cleaning Function for english tweets
 ####################################
 
 df_cleaner_english <- function(df){
@@ -336,7 +365,9 @@ df_cleaner_german <- function(df){
 }
 
 
-
+################################################################################
+############################### Process ########################################
+################################################################################
 
 
 # list all folders
@@ -345,15 +376,19 @@ folders <- list.files(path_source)
 # select subset of folder
 folders <- c("De_NoFilter")
 
+
+# go thru all main folders 
 for (folder in folders){
   if (folder %in% c("De_NoFilter", "En_NoFilter")){
-    
+    # for nofilter folders find source and destination and check which files are missing
     files_source <- list.files(file.path(path_source, folder))
     files_dest <- list.files(file.path(path_dest, folder))
     files <- setdiff(files_source, files_dest)
     
+    # for every missing file
     for (file in files){
       print(glue("Started working on {file}."))
+      # load the data
       df <- readr::read_csv(file.path(path_source,folder, file),
                             col_types = cols(.default = "c", lat = "d", long = "d",
                                              retweets_count = "i", replies_count = "i",
@@ -367,14 +402,13 @@ for (folder in folders){
       }
     
     # save df
-    
     path_save <- file.path(path_dest, folder, file)
     readr::write_csv(df, path_save)
     print("File saved, moving on to next file.")
     }
     
   } else if (folder == "Companies"){
-    
+    # for all company folders go one level deeper
     subfolders <- list.files(file.path(path_source, folder, subfolder))
     
     for (subfolder in subfolders){
@@ -386,11 +420,13 @@ for (folder in folders){
       # find files that are in source but not in destination i.e. find files that still need to be cleaned
       files_source <- list.files(file.path(path_source, folder, subfolder))
       files_dest <- list.files(file.path(path_dest, folder, subfolder))
-      
+      # files in source but not in destination
       files <- setdiff(files_source, files_dest)
       
+      # for every missing file
       for (file in files){
         print(glue("Started working on {file}."))
+        # load data
         df <- readr::read_csv(file.path(path_source,folder, file),
                               col_types = cols(.default = "c", lat = "d", long = "d",
                                                retweets_count = "i", replies_count = "i",
@@ -404,6 +440,7 @@ for (folder in folders){
         df_de <- df_cleaner_german(df)
         df_en <- df_cleaner_english(df)
         
+        #put data back togethter (we store company data together because there arent as many tweets in the company files)
         df <- rbind(df_de, df_en)
         
         # save df
