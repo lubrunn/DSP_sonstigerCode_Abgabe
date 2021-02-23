@@ -10,20 +10,101 @@ setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 folders <- list.files("cleaned")
 
 
-likes_list <- c(0, 50, 100, 200)
-retweets_list <- c(0, 50, 100, 200)
+likes_list <- c(0, 10, 50, 100, 200)
+retweets_list <- c(0, 10, 50, 100, 200)
 long_list <- c(0,1)
 
-abc <- function(x){
-  print(x * i)
-}
+
 
 #### for testing
-folder <- folders[4]
+folder <- folders[3]
 file <- files[1]
-retweets <- 10
-likes <- 100
-long <- 80
+retweets <- 0
+likes <- 5
+long <- 0
+
+
+
+term_freq_computer <- function(folder) {  
+  
+ # files <- list.files(source)
+  
+  
+  
+  # loop for likes filter
+  for (likes in likes_list){
+    # loop for retweets
+    for (retweets in retweets_list){
+      #loop for long dummy
+      for (long in long_list){
+        #loop over each file
+        for (file in files){
+          print(glue("Working on {file} for retweets: {retweets}, likes: {likes}, long:{long}"))
+          time1 <- Sys.time()
+          df <- read_csv(file.path(source,file),
+                         col_types = cols_only(doc_id = "c",text = "c",
+                                               created_at = "c",
+                                               retweets_count = "i",
+                                               likes_count = "i", long_tweet = "i")) 
+        
+        
+        df <- df %>% filter(
+          likes_count >= likes,
+          retweets_count >= retweets,
+          #long_tweet == long
+          long_tweet >= long
+        )
+        
+        
+        # remove words that dont at least appear in 1% of tweets
+        threshold <- 0.01 * dim(df)[1]
+        
+        # compute term frequencies for the entire day
+        term_frequency_n <-  df %>% 
+          tidytext::unnest_tokens(word, text) %>%
+          count(word) %>% 
+          filter(n > threshold) %>%
+          arrange(word) %>%
+          t() %>% data.frame() %>%
+          janitor::row_to_names(row_number = 1) 
+        
+        # convert to numeric
+        term_frequency_n <- sapply(term_frequency_n, as.numeric) %>% t() %>% data.frame() 
+        # store number of tweets to created term frequencies
+        term_frequency_n$num_tweets <- dim(df)[1]
+        
+        
+        
+        # add column with date
+        term_frequency_n$date <- stringr::str_extract(file, "[0-9]{4}-[0-9]{2}-[0-9]{2}")
+        
+        # append to df
+        if  (!exists("term_frequency")) {
+          term_frequency <- term_frequency_n
+        } else {
+          term_frequency <- dplyr::bind_rows(term_frequency, term_frequency_n)
+        }
+        print(Sys.time() - time1)
+        }
+        # save df
+        print("Saving file")
+        filename_new <- glue("term_freq_{folder}_rt_{retweets}_li_{likes}_lo_{long}.csv")
+        dest_path <- file.path(dest, filename_new)
+        write_csv(term_frequency, dest_path)
+        
+        
+    }
+  }
+  }
+}
+
+
+
+
+
+
+folders <- "En_NoFilter"
+files <- files[1:10]
 
 for (folder in folders){
   if (grepl("Companies", folder)) {
@@ -49,123 +130,24 @@ for (folder in folders){
   
 }
 
-term_freq_computer <- function(folder) {  
-  
-  files <- list.files(source)
-  
-  
-  
-  # loop for likes filter
-  for (likes in likes_list){
-    # loop for retweets
-    for (retweets in retweets_list){
-      #loop for long dummy
-      for (long in long_list){
-        #loop over each file
-        for (file in files){
-          df <- read_csv(file.path(source,file),
-                         col_types = cols_only(id = "c",tweet = "c",
-                                               created_at = "c",
-                                               retweets_count = "i",
-                                               likes_count = "i", tweet_length = "i")) %>%
-            rename(doc_id = id, text = tweet)
-        
-        
-        df <- df %>% filter(
-          likes_count >= likes,
-          retweets_count >= retweets,
-          #long_tweet == long
-          tweet_length >= long
-        )
-        
-        #set the schema:docs
-        docs <- tm::DataframeSource(df)
-        # convert to corpus
-        text_corpus <- VCorpus(docs)
-        
-        dtm <- DocumentTermMatrix(text_corpus)
-        #remove sparse words
-        dtm <- removeSparseTerms(dtm, 0.99)
-        # convert to matrix
-        dtm_m <- as.matrix(dtm)
-        
-        # compute term frequencies for the entire day
-        term_frequency_n <- colSums(dtm_m) %>% t() %>% data.frame()
-        
-        # add column with date
-        term_frequency_n$date <- str_extract(file, "[0-9]{4}-[0-9]{2}-[0-9]{2}")
-        
-        # append to df
-        if  (!exists("term_frequency")) {
-          term_frequency <- term_frequency_n
-        } else {
-          term_frequency <- dplyr::bind_rows(term_frequency, term_frequency_n)
-        }
-        
-        }
-        # save df
-        filename_new <- glue("term_freq_{folder}_rt_{retweets}_li_{likes}_lo_{long}")
-        dest_path <- file.path(dest, filename_new)
-        write.csv(df, dest_path)
-    }
-  }
-  }
-}
-
-
-
-# parquet file
-path2 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2020-04-01_cleaned.parquet"
-tweets <- arrow::read_parquet(path2)
-
-
-#set the schema:docs
-docs <- tm::DataframeSource(tweets)
-
-
-
-
-#clean_corpus function from datacamp
-# no need already cleaned previously
-# clean_corpus <- function(corpus){
-#         
-#         
-#         corpus <- tm_map(corpus, removeNumbers)
-#         
-#         corpus <- tm_map(corpus, removeWords,
-#                          c(stopwords("SMART"), "amp"))
-#         
-#         return(corpus)
-# }
-
-text_corpus <- VCorpus(docs)
 
 
 
 
 
 
-content(text_corpus[[1]])
-#for standard meta data (including id)
-meta(text_corpus[[1]])
-
-#for all added meta data
-meta(text_corpus[1])
-
-dtm <- DocumentTermMatrix(text_corpus)
-#remove sparse words
-dtm <- removeSparseTerms(dtm, 0.99)
-dtm_m <- as.matrix(dtm)
-
-#check matrix
-dtm_m[1,]
 
 
 
-###########################################
-## filter on meta data e.g. retweets_count
-###########################################
-meta_data <- meta(text_corpus)
 
-# only keep values in dtm where retweets_count > 2
-dtm_m_filt <- dtm_m[meta_data$retweets_count > 1,]
+
+
+
+
+
+
+
+
+
+
+

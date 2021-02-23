@@ -1,54 +1,115 @@
-if(!require("corpus")) install.packages("corpus")
-if(!require("hunspell")) install.packages("hunspell")
-# install.packages("stopwords")
-
-library(tidyverse)
-
-
-library(arrow) # read feather files
-
-
-
+library(dplyr)
 library(tidytext)
-
-
-#install.packages('rJava')
-library('rJava')
-
-library(qdap)
-
 library(textclean)
+library(readr)
+library(corpus)
 
-
-library(hunspell)
-
-
+vpc = FALSE
 
 # read in data
-setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
-# tweets_raw <- stream_in(file(r"(C:\Users\lukas\OneDrive - UT Cloud\DSP_test_data\raw_test\En_NoFilter\En_NoFilter_2020-04-01.json)"))
+if (vpc == T) {
+  setwd("/home/lukasbrunner/share/onedrive_new/Data/Twitter")
+} else {
+  setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
+}
 
-path <- "raw_feather/En_NoFilter"
-
-
-time1 <- Sys.time()
-files <- list.files(path)
-file <- files[1]
-tweets_raw <- arrow::read_feather(file.path(path, file))
-
-#a <- head(tweets_raw, 1000)
-
-
-# select only relevant columns and change column names so one can keep meta data when turning data into to corpus
-tweets <- tweets_raw %>% rename("doc_id" = id, "text" =  tweet)
+path_source <- "pre_cleaned"
+path_dest <- "cleaned"
 
 
 
-# testing with single tweet
-#tweets <- tweets[1,]
-# tweets$text <- "Mr. Jones &amp; Jones Jones don't don't can't shouldn't haven't @twitter_user123 it's so soooooooooooo rate T H I S movie 0/10 VeRy BAD ???? :D lol and stopwords i could have really done it myself, one,two,three"
 
-tweets$text <- text_tokens(tweets$text)
+# list all folders
+folders <- list.files(path_source)
+
+# select subset of folder
+folders <- c("En_NoFilter")
+
+for (folder in folders){
+  if (folder %in% c("De_NoFilter", "En_NoFilter")){
+    
+    files_source <- list.files(file.path(path_source, folder))
+    files_dest <- list.files(file.path(path_dest, folder))
+    files <- setdiff(files_source, files_dest)
+    
+    for (file in files){
+      print(glue("Started working on {file}."))
+      df <- readr::read_csv(file.path(path_source,folder, file),
+                            col_types = cols(.default = "c", lat = "d", long = "d",
+                                             retweets_count = "i", replies_count = "i",
+                                             likes_count = "i", tweet_length = "i"))
+      
+      # clean dataframe
+      if (folder == "En_NoFilter"){
+      df <- df_cleaner_english(df)
+      } else if (folder == "De_NoFilter"){
+        df <- df_cleaner_german(df)
+      }
+    }
+      # save df
+      
+      path_save <- file.path(path_dest, folder, file)
+      readr::write_csv(df, path_save)
+      print("File saved, moving on to next file.")
+      
+      
+    } else if (folder == "Companies"){
+      
+      subfolders <- list.files(file.path(path_source, folder, subfolder))
+      
+      for (subfolder in subfolders){
+        
+        
+        # if subfolder does not exist at destination create it
+        dir.create(file.path(path_dest, folder, subfolder), showWarnings = FALSE)
+        
+        # find files that are in source but not in destination i.e. find files that still need to be cleaned
+        files_source <- list.files(file.path(path_source, folder, subfolder))
+        files_dest <- list.files(file.path(path_dest, folder, subfolder))
+        
+        files <- setdiff(files_source, files_dest)
+        
+        for (file in files){
+          print(glue("Started working on {file}."))
+          df <- readr::read_csv(file.path(path_source,folder, file),
+                                col_types = cols(.default = "c", lat = "d", long = "d",
+                                                 retweets_count = "i", replies_count = "i",
+                                                 likes_count = "i", tweet_length = "i"))
+          
+          #separete german and englisch tweets
+          df_de <- df %>% filter(language == "de")
+          df_en <- df %>% filter(language == "en")
+          
+          # clean dataframes
+          df_de <- df_cleaner_german(df)
+          df_en <- df_cleaner_english(df)
+          
+          df <- rbind(df_de, df_en)
+          
+          # save df
+          path_save = file.path(path_dest, folder, subfolder, file)
+          readr::write_csv(df, path_save)
+          print("File saved, moving on to next file.")
+        
+        
+      }
+      
+      
+      
+      
+      
+    }
+    
+    
+    
+    
+    
+  }
+  }
+
+
+
+
 
 # function that removes consecutive duplicates
 dup_remover <- function(string){
@@ -57,112 +118,121 @@ dup_remover <- function(string){
   return(string)
 }
 
+# stemming function
+# stem_hunspell <- function(term) {
+#   # look up the term in the dictionary
+#   stems <- hunspell::hunspell_stem(term)[[1]]
+#   
+#   if (length(stems) == 0) { # if there are no stems, use the original term
+#     stem <- term
+#   } else { # if there are multiple stems, use the last one
+#     stem <- stems[[length(stems)]]
+#   }
+#   
+#   stem
+# }
+
+
+
+
+
+
+
+####################################
+##### Cleaning Function for german tweets
+####################################
+
+df_cleaner_english <- function(df){
+print("Started Cleaning dataframe")
+time1 <- Sys.time()
+# select only relevant columns and change column names so one can keep meta data when turning data into to corpus
+tweets <- df %>% rename("doc_id" = id, "text" =  tweet)
+
+
+# tokenize words in order to filter out consecutive duplicates (assumption that they are from people accidentatly typing same same word twice)
+tweets$text <- corpus::text_tokens(tweets$text)
+# apply the duplicate remover function (only consecutive duplicates are removed)
 tweets$text <- sapply(tweets$text, dup_remover)
 
 
 
-
-###
-tweets$text <- replace_kern(tweets$text) # A L L becomes ALL
-
+## apply several functions from textcleaner package and other cleaning steps which are specifically made for messy text
+# A L L becomes ALL
+tweets$text <- replace_kern(tweets$text) 
 
 ### convert all tweets to lower case
 tweets$text <- tolower(tweets$text)
-
-
-#a <- head(tweets, 1000)
-#remove urls
-tweets$text <- qdapRegex::rm_twitter_url(tweets$text)
-
-
 
 ####### Texclean functions
 # replace special apostrophe with normal apostrophe (otherwise replace_contractions
 # does not work for these cases)
 tweets$text <- gsub("’", "'", tweets$text)
-#Mr. = Mister
-tweets$text <- replace_abbreviation(tweets$text)  
-# it's = it is
-time2 <- Sys.time()
+
+
+ # it's = it is
 tweets$text <- replace_contraction(tweets$text)
-print(Sys.time() - time2)
+
 
 # replace haven't because replace_contractions does not
 tweets$text <- gsub("haven't", "have not", tweets$text)
+
 #noooooooooooo becomes no
 tweets$text <- replace_word_elongation(tweets$text) 
+
 #remove email adresses
 tweets$text <- replace_email(tweets$text) 
 
-#replaces emoticons
-time2 <- Sys.time()
+
+#replaces emoticons (emojis already replaced with python because quicker)
 tweets$text <- replace_emoticon(tweets$text) 
-print(Sys.time() - time2)
+
 
 #removes html markup: &euro becomes euro
 tweets$text <- replace_html(tweets$text) 
-# C+ becomes slighlty above average
+
+# C+ becomes slightly above average
 tweets$text <- replace_grade(tweets$text) 
-#lol = laughing out loud
+
+#lol = laughing out loud --> lexical based --> not ideal but could not find better lexicon, most other lexicons were to aggressive and made things worse, hence we choose
+# this middle ground
 tweets$text <- replace_internet_slang(tweets$text)
 
-#replaces emojis with text representations
-time2 <- Sys.time()
-tweets$textN <- replace_emoji(tweets$text) 
-print(Sys.time() - time2)
 
-#replaces with a unique identifier that corresponds to lexicon::hash_sentiment_emoji
-tweets$text <- replace_emoji_identifier(tweets$text) 
-#removes chracter strings with non-ASCII chracters
+#removes character strings with non-ASCII characters
 tweets$text <- replace_non_ascii(tweets$text) 
-#removes twitter handles
-tweets$text <- replace_tag(tweets$text) 
+
+
 #0/10 becomes terrible, 5 stars becomes best
 tweets$text <- replace_rating(tweets$text) 
-#removes urls from text
-tweets$text <- replace_url(tweets$text) 
+
 #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
 tweets$text <- replace_white(tweets$text) 
-### convert all tweets to lower case
+
+### convert all tweets to lower case again because some replacements are in upper case
 tweets$text <- tolower(tweets$text)
 
 
-#adds space after comma so later one,two,three does not become onetwothree
+#adds space after comma so later one,two,three does not become onetwothree when removing special characters
 tweets$text <- add_comma_space(tweets$text) 
 
-# remove twitter handles
-# tweets$text <- gsub("@\\w+", "", tweets$text)
-
 # Get rid of hashtags
-tweets$text <- str_replace_all(tweets$text,"#[a-z,A-Z]*","")
+tweets$text <- stringr::str_replace_all(tweets$text,"#[a-z,A-Z]*","")
 
-#remove special , note: this also removes emojis
+#remove special characters and numbers
 tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
 
 
-# Get rid of references to other screennames
-#tweets$tweet <- str_replace_all(tweets$tweet,"@[a-z,A-Z]*","") 
 
-#get rid of unnecessary white spaces
-tweets$text <- stringr::str_squish(tweets$text)
+print("Finished with text cleaning, moving on to stemming")
 
 ######### stemming
-stem_hunspell <- function(term) {
-  # look up the term in the dictionary
-  stems <- hunspell::hunspell_stem(term)[[1]]
-  
-  if (length(stems) == 0) { # if there are no stems, use the original term
-    stem <- term
-  } else { # if there are multiple stems, use the last one
-    stem <- stems[[length(stems)]]
-  }
-  
-  stem
-}
-tweets$text <- text_tokens(tweets$text, stemmer = stem_hunspell)
 
+# use simple stemming method because otherwise cleaning takes too long
+#  hunspell -> with min per file --> 5 * 800 (files) * 2 foldersr = 5.5 days just for nofilter folders, without comapnies
+# snwoball takes few seconds in comparison
+tweets$text <- text_tokens(tweets$text, stemmer = "en")
 
-
+    
 
 # collapse text column list to one string again
 tweets <-tweets %>% rowwise() %>%
@@ -170,99 +240,189 @@ tweets <-tweets %>% rowwise() %>%
   ungroup()
 
 
-## same for hashtags
+################
+
+## spread hashtags (are in lists)
 # collapse text column list to one string again
 tweets <-tweets %>% rowwise() %>%
   mutate(hashtags = paste(hashtags, collapse=' ')) %>%
   ungroup()
 
 
-###### place column contains lists
-# move coordinates into two lat/long columns
-tweets <- unnest_wider(tweets, place) %>%
-  select(-c("...1", "type")) %>%
-  mutate_all(list(~na_if(.,"NULL"))) %>%
-  unnest_wider(coordinates) %>%
-  rename( "lat" = "...1", "long" = "...2" )
 
-
-
+#####################
+##### stopword removal
+######################
+print("Removing stopwords")
 # remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
 # e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
-tweets$text <- removeWords(tweets$text,c(tm::stopwords("SMART"),
+tweets$text <- tm::removeWords(tweets$text,c(tm::stopwords("SMART"),
                                          stopwords::stopwords("en", "snowball"),
                                          stopwords::stopwords("en", "nltk"),
-                                         "face",
-                                         "amp",
-                                         "make"))
+                                         "face", #from emoji and emoticon replacement a lot of face terms
+                                         "amp", #from html just in case function did not work
+                                         "make", # personal choice 
+                                         "gt")) #from html just in case function did not work
 
 # remove whitespace again
 #get rid of unnecessary white spaces
 tweets$text <- stringr::str_squish(tweets$text)
 
+########################
+
+
+# include dummy term when tweet longer than median
+tweets$long_tweet <- ifelse(tweets$tweet_length > 80, 1, 0)
+
 
 
 print(glue("The process took {Sys.time() - time1}"))
-# save created at as date instead of datetime
-# tweets$created_at <- as.character(as.Date(tweets$created_at))
-
-# check how much data can be saved by removing columns
-tweets_orig <- tweets
+return(tweets)
+}
 
 
-# tweets <- tweets_orig %>% select(
-#   doc_id, text, created_at, language,
-#   retweets_count, likes_count
-# )
-
-#######################################
-#### save cleaned file
-######################################
-# parquetfile
-path_save = "C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/text_cleaned/En_NoFilter/En_NoFilter_2020-04-01_cleaned.parquet"
-arrow::write_parquet(tweets, path_save)
 
 
-# # 1st feather format
-# path = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned.feather"
-# feather::write_feather(tweets, path)
-# 
-# # different feather format
-# path1 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned2.feather"
-# arrow::write_feather(tweets, path1)
-# 
-# 
-# 
-# # parquet file with two tweet dfs
-# tweets2 <- rbind(tweets, tweets)
-# path22 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned32.parquet"
-# arrow::write_parquet(tweets2, path22)
-# 
-# # with 80k tweets
-# tweets3 <- rbind(tweets2, tweets2)
-# path23 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned33.parquet"
-# arrow::write_parquet(tweets3, path23)
-# 
-# # with 160k tweets
-# tweets4 <- rbind(tweets3, tweets3)
-# path24 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned34.parquet"
-# arrow::write_parquet(tweets4, path24)
-# 
-# 
-# #160 mio tweets
-# tweets6 <- purrr::map_dfr(seq_len(1000), ~tweets4)
-# path25 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned35.parquet"
-# arrow::write_parquet(tweets6, path25)
-# 
-# 
-# # save as csv as reference
-# path3 = "C:/Users/lukas/OneDrive - UT Cloud/DSP_test_data/cleaned/En_NoFilter_2018-12-07_cleaned4.csv"
-# write.csv(tweets, path3)
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
+
+###########################################
+######## Cleaning Function for german tweets
+###########################################
+
+df_cleaner_german <- function(df){
+  print("Started Cleaning dataframe")
+  time1 <- Sys.time()
+  # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
+  tweets <- df %>% rename("doc_id" = id, "text" =  tweet)
+  
+  
+  # tokenize words in order to filter out consecutive duplicates (assumption that they are from people accidentatly typing same same word twice)
+  tweets$text <- corpus::text_tokens(tweets$text)
+  # apply the duplicate remover function (only consecutive duplicates are removed)
+  tweets$text <- sapply(tweets$text, dup_remover)
+  
+  
+  
+  ## apply several functions from textcleaner package and other cleaning steps which are specifically made for messy text
+  # A L L becomes ALL
+  tweets$text <- replace_kern(tweets$text) 
+  
+  ### convert all tweets to lower case
+  tweets$text <- tolower(tweets$text)
+  
+  ####### Texclean functions
+  # replace special apostrophe with normal apostrophe (otherwise replace_contractions
+  # does not work for these cases)
+  tweets$text <- gsub("’", "'", tweets$text)
+  
+  
+  
+  
+  
+  
+  
+  #noooooooooooo becomes no
+  tweets$text <- replace_word_elongation(tweets$text) 
+  
+  #remove email adresses
+  tweets$text <- replace_email(tweets$text) 
+  
+  
+  #removes html markup: &euro becomes euro
+  tweets$text <- replace_html(tweets$text) 
+  
+  
+  
+  
+  #lol = laughing out loud --> lexical based --> not ideal but could not find better lexicon, most other lexicons were to aggressive and made things worse, hence we choose
+  # this middle ground
+  tweets$text <- replace_internet_slang(tweets$text)
+  
+  # replace emoticons --> translation to english but we think its better than dropping them
+  tweets$text <- replace_emoticon(tweets$text) 
+  
+  
+  #removes character strings with non-ASCII characters
+  tweets$text <- replace_non_ascii(tweets$text) 
+  
+  
+  #0/10 becomes terrible, 5 stars becomes best
+   
+  
+  #removes escaped chars -> I go \r to the \t  next line becomes I go to the next line
+  tweets$text <- replace_white(tweets$text) 
+  
+  ### convert all tweets to lower case again because some replacements are in upper case
+  tweets$text <- tolower(tweets$text)
+  
+  
+  #adds space after comma so later one,two,three does not become onetwothree when removing special characters
+  tweets$text <- add_comma_space(tweets$text) 
+  
+  # Get rid of hashtags
+  tweets$text <- stringr::str_replace_all(tweets$text,"#[a-z,A-Z]*","")
+  
+  #remove special characters and numbers
+  tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
+  
+  print("Finished with text cleaning, moving on to stemming")
+
+  ######### stemming
+  tweets$text <-  text_tokens(tweets$text, stemmer = "de")
+
+  # collapse text column list to one string again
+  tweets <-tweets %>% rowwise() %>%
+    mutate(text = paste(text, collapse=' ')) %>%
+    ungroup()
+  
+  
+  ################
+  
+  ## spread hashtags (are in lists)
+  # collapse text column list to one string again
+  tweets <-tweets %>% rowwise() %>%
+    mutate(hashtags = paste(hashtags, collapse=' ')) %>%
+    ungroup()
+  
+  
+  
+  #####################
+  ##### stopword removal
+  ######################
+  print("Removing stopwords")
+  # remove stopwords, remove face because it appears very often thru conversion of emojis/emoticons to text 
+  # e.g. :D becomes lauging face, :) = smiling face --> so a lot of face words get created
+  tweets$text <- tm::removeWords(tweets$text,c(
+                                           stopwords::stopwords("de", "snowball"),
+                                           stopwords::stopwords("de", "nltk"),
+                                           #"face", #from emoji and emoticon replacement a lot of face terms
+                                           "amp", #from html just in case function did not work
+                                           #"make", # personal choice 
+                                           "gt")) #from html just in case function did not work
+  
+  # remove whitespace again
+  #get rid of unnecessary white spaces
+  tweets$text <- stringr::str_squish(tweets$text)
+  
+  ########################
+  
+  
+  # include dummy term when tweet longer than median
+  tweets$long_tweet <- ifelse(tweets$tweet_length > 80, 1, 0)
+  
+  
+  
+  print(glue("The process took {Sys.time() - time1}"))
+  return(tweets)
+  
+  
+  
+  
+}
+
+
+
+
+
+
+
+
