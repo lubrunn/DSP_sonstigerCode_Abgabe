@@ -77,6 +77,28 @@ appender <- function(files, source, dest, folder, companies = F){
   
     
 }
+
+company_appender <- function(source_main, company_folders){
+  df_all <- NULL
+  for (company_folder in company_folders){
+    # read entire df for company
+    file_path <- file.path(source_main, folder, company_folder, glue("{folder}_all.csv"))
+    read_csv(file_path,
+             col_types = cols(.default = "c",text = "c",
+                              created_at = "c",
+                              retweets_count = "i",
+                              long = "i", lat = "i",
+                              likes_count = "i", tweet_length = "i"))
+    
+    # append
+    # if first df then set it to df_all otherwise append
+    if (df_all <- NULL){
+      df_all <- df
+    } else {
+      df_all <- rbind(df_all, df)
+    }
+  }
+}
   
   
 # this function goes thru all folders and calls the appender
@@ -95,6 +117,16 @@ append_all <- function(source_main){
         files <- list.files(source)
         appender(files, source, dest, folder = company_folder, companies = T)
       }
+      
+      # then go into each company folder, take the appended df containing all days and append all company df to one big 
+      # company df containing all days for all companies
+      for (company_folder in company_folders){
+        
+      }
+      
+      
+      
+      
     } else if (grepl("NoFilter", folder)) {
       source <- file.path(source_main, folder)
       dest <- file.path(source_main, folder)
