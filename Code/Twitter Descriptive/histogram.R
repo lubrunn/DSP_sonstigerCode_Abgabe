@@ -20,7 +20,7 @@ longs <- 0
 # read data
 files <- list.files(source)
 
-df <- rbind(df, df2)
+df <- rbind(df, df)
 
 df <- readr::read_csv(file.path(source,file),
                col_types = cols_only(doc_id = "c",text = "c",
