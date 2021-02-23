@@ -19,93 +19,7 @@ path_dest <- "cleaned"
 
 
 
-# list all folders
-folders <- list.files(path_source)
 
-# select subset of folder
-folders <- c("En_NoFilter")
-
-for (folder in folders){
-  if (folder %in% c("De_NoFilter", "En_NoFilter")){
-    
-    files_source <- list.files(file.path(path_source, folder))
-    files_dest <- list.files(file.path(path_dest, folder))
-    files <- setdiff(files_source, files_dest)
-    
-    for (file in files){
-      print(glue("Started working on {file}."))
-      df <- readr::read_csv(file.path(path_source,folder, file),
-                            col_types = cols(.default = "c", lat = "d", long = "d",
-                                             retweets_count = "i", replies_count = "i",
-                                             likes_count = "i", tweet_length = "i"))
-      
-      # clean dataframe
-      if (folder == "En_NoFilter"){
-      df <- df_cleaner_english(df)
-      } else if (folder == "De_NoFilter"){
-        df <- df_cleaner_german(df)
-      }
-    }
-      # save df
-      
-      path_save <- file.path(path_dest, folder, file)
-      readr::write_csv(df, path_save)
-      print("File saved, moving on to next file.")
-      
-      
-    } else if (folder == "Companies"){
-      
-      subfolders <- list.files(file.path(path_source, folder, subfolder))
-      
-      for (subfolder in subfolders){
-        
-        
-        # if subfolder does not exist at destination create it
-        dir.create(file.path(path_dest, folder, subfolder), showWarnings = FALSE)
-        
-        # find files that are in source but not in destination i.e. find files that still need to be cleaned
-        files_source <- list.files(file.path(path_source, folder, subfolder))
-        files_dest <- list.files(file.path(path_dest, folder, subfolder))
-        
-        files <- setdiff(files_source, files_dest)
-        
-        for (file in files){
-          print(glue("Started working on {file}."))
-          df <- readr::read_csv(file.path(path_source,folder, file),
-                                col_types = cols(.default = "c", lat = "d", long = "d",
-                                                 retweets_count = "i", replies_count = "i",
-                                                 likes_count = "i", tweet_length = "i"))
-          
-          #separete german and englisch tweets
-          df_de <- df %>% filter(language == "de")
-          df_en <- df %>% filter(language == "en")
-          
-          # clean dataframes
-          df_de <- df_cleaner_german(df)
-          df_en <- df_cleaner_english(df)
-          
-          df <- rbind(df_de, df_en)
-          
-          # save df
-          path_save = file.path(path_dest, folder, subfolder, file)
-          readr::write_csv(df, path_save)
-          print("File saved, moving on to next file.")
-        
-        
-      }
-      
-      
-      
-      
-      
-    }
-    
-    
-    
-    
-    
-  }
-  }
 
 
 
@@ -364,6 +278,8 @@ df_cleaner_german <- function(df){
   #remove special characters and numbers
   tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
   
+ 
+  
   print("Finished with text cleaning, moving on to stemming")
 
   ######### stemming
@@ -423,6 +339,80 @@ df_cleaner_german <- function(df){
 
 
 
+# list all folders
+folders <- list.files(path_source)
 
+# select subset of folder
+folders <- c("De_NoFilter")
+
+for (folder in folders){
+  if (folder %in% c("De_NoFilter", "En_NoFilter")){
+    
+    files_source <- list.files(file.path(path_source, folder))
+    files_dest <- list.files(file.path(path_dest, folder))
+    files <- setdiff(files_source, files_dest)
+    
+    for (file in files){
+      print(glue("Started working on {file}."))
+      df <- readr::read_csv(file.path(path_source,folder, file),
+                            col_types = cols(.default = "c", lat = "d", long = "d",
+                                             retweets_count = "i", replies_count = "i",
+                                             likes_count = "i", tweet_length = "i"))
+      
+      # clean dataframe
+      if (folder == "En_NoFilter"){
+        df <- df_cleaner_english(df)
+      } else if (folder == "De_NoFilter"){
+        df <- df_cleaner_german(df)
+      }
+    
+    # save df
+    
+    path_save <- file.path(path_dest, folder, file)
+    readr::write_csv(df, path_save)
+    print("File saved, moving on to next file.")
+    }
+    
+  } else if (folder == "Companies"){
+    
+    subfolders <- list.files(file.path(path_source, folder, subfolder))
+    
+    for (subfolder in subfolders){
+      
+      
+      # if subfolder does not exist at destination create it
+      dir.create(file.path(path_dest, folder, subfolder), showWarnings = FALSE)
+      
+      # find files that are in source but not in destination i.e. find files that still need to be cleaned
+      files_source <- list.files(file.path(path_source, folder, subfolder))
+      files_dest <- list.files(file.path(path_dest, folder, subfolder))
+      
+      files <- setdiff(files_source, files_dest)
+      
+      for (file in files){
+        print(glue("Started working on {file}."))
+        df <- readr::read_csv(file.path(path_source,folder, file),
+                              col_types = cols(.default = "c", lat = "d", long = "d",
+                                               retweets_count = "i", replies_count = "i",
+                                               likes_count = "i", tweet_length = "i"))
+        
+        #separete german and englisch tweets
+        df_de <- df %>% filter(language == "de")
+        df_en <- df %>% filter(language == "en")
+        
+        # clean dataframes
+        df_de <- df_cleaner_german(df)
+        df_en <- df_cleaner_english(df)
+        
+        df <- rbind(df_de, df_en)
+        
+        # save df
+        path_save = file.path(path_dest, folder, subfolder, file)
+        readr::write_csv(df, path_save)
+        print("File saved, moving on to next file.")
+      }
+    }
+  }
+}
 
 
