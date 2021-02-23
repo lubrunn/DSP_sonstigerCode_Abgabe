@@ -52,7 +52,7 @@ term_freq_computer <- function(folder) {
     # loop for retweets
     for (retweets in retweets_list){
       #loop for long dummy
-      for (long in long_list){
+      for (longs in long_list){
         #loop over each file
         for (file in files){
           print(glue("Working on {file} for retweets: {retweets}, likes: {likes}, long:{long}"))
@@ -65,10 +65,10 @@ term_freq_computer <- function(folder) {
         
         
         df <- df %>% filter(
-          likes_count >= likes,
-          retweets_count >= retweets,
+          likes_count >= likes &
+          retweets_count >= retweets &
           #long_tweet == long
-          tweet_length >= long
+          tweet_length >= longs
         )
         
         
