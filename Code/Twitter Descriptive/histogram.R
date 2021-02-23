@@ -1,12 +1,91 @@
-library(ggplot2)
+library(tidyverse)
+setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
+
+folders <- list.files("cleaned")
+
+
+likes_list <- c(0, 10, 50, 100, 200)
+retweets_list <- c(0, 10, 50, 100, 200)
+long_list <- c(0,81)
 
 
 
+#### for testing
+folder <- folders[3]
+file <- files[1]
+retweets <- 0
+likes <- 5
+long <- 0
 
-tweets_n <- tweets %>%
-  filter(retweets_count < quantile(retweets_count, 0.99))
+# read data
+files <- list.files(source)
 
-  
-as.data.frame(table(cut(tweets_n$retweets_count, breaks=seq(0,max(tweets_n$retweets_count), by=2)))) %>%
-  ggplot(aes(Var1, Freq)) +
+
+
+df <- readr::read_csv(file.path(source,file),
+               col_types = cols_only(doc_id = "c",text = "c",
+                                     created_at = "c",
+                                     retweets_count = "i",
+                                     likes_count = "i", tweet_length = "i")) 
+
+
+# for retweets hist
+df_bins <- df %>% filter(
+  likes_count >= likes,
+  retweets_count >= retweets,
+  #long_tweet == long
+  tweet_length >= long) %>%
+  group_by(date, retweets_count) %>%
+  summarise(n = n())
+
+# for likes histo
+df_bins <- df %>% filter(
+  likes_count >= likes,
+  retweets_count >= retweets,
+  #long_tweet == long
+  tweet_length >= long) %>%
+  group_by(date, likes_count) %>%
+  summarise(n = n())
+
+# for long histo
+df_bins <- df %>% filter(
+  likes_count >= likes,
+  retweets_count >= retweets,
+  #long_tweet == long
+  tweet_length >= long) %>%
+  group_by(date, tweet_length) %>%
+  summarise(n = n())
+
+
+# plot
+df %>%
+ggplot(aes(Var1, Freq)) +
   geom_col()
+
+for (folder in folders){
+  if (grepl("Companies", folder)) {
+    source_main <- file.path("cleaned", folder)
+    company_folders <- list.files(source_main)
+    
+    #create companies folder if doesnt exist
+    dir.create(file.path("histo", folder), showWarnings = FALSE)
+    
+    for (company_folder in company_folders){
+      source <- file.path("cleaned", folder, company_folder)
+      dest <- file.path("histo", folder, company_folder)
+      # if folder doesnt exist, create it
+      dir.create(dest, showWarnings = FALSE)
+      # run function
+      #term_freq_computer(company_folder)
+    }
+  } else if (grepl("NoFilter", folder)) {
+    source <- file.path("cleaned", folder)
+    dest <- file.path("histo", folder)
+    # if folder doesnt exist, create it
+    dir.create(dest, showWarnings = FALSE)
+    
+    # call function for each nofilter folder
+    #term_freq_computer(folder)
+  }
+  
+}
