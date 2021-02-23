@@ -12,7 +12,7 @@ folders <- list.files("cleaned")
 
 likes_list <- c(0, 10, 50, 100, 200)
 retweets_list <- c(0, 10, 50, 100, 200)
-long_list <- c(0,1)
+long_list <- c(0,81)
 
 
 
@@ -24,7 +24,7 @@ likes <- 5
 long <- 0
 
 
-
+# define the function which computes word frequencies per day for each filter combination
 term_freq_computer <- function(folder) {  
   
  # files <- list.files(source)
@@ -52,7 +52,7 @@ term_freq_computer <- function(folder) {
           likes_count >= likes,
           retweets_count >= retweets,
           #long_tweet == long
-          long_tweet >= long
+          tweet_length >= 81
         )
         
         
@@ -102,7 +102,7 @@ term_freq_computer <- function(folder) {
 
 
 
-
+# run computation for each folder of interest
 folders <- "En_NoFilter"
 files <- files[1:10]
 
