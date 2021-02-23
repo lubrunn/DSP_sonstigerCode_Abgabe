@@ -3,6 +3,22 @@ library(dplyr)
 library(tm)
 library(glue)
 
+#################################################################################
+#################################################################################
+
+'
+Here we compute term frequencies per day in order to increase execution speed in the app.
+We preprocess for every possible combination the user will be able to choose.
+We then aggregate each data for the live filtering for the date range. For the
+other filter methods (retweets etc.) each filter has its own file (or its all
+in sql table if we have enough time to upload it all)
+'
+
+
+
+
+#################################################################################
+#################################################################################
 
 setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 ######## read in cleaned data
@@ -27,7 +43,7 @@ long <- 0
 # define the function which computes word frequencies per day for each filter combination
 term_freq_computer <- function(folder) {  
   
- # files <- list.files(source)
+ files <- list.files(source)
   
   
   
@@ -45,14 +61,14 @@ term_freq_computer <- function(folder) {
                          col_types = cols_only(doc_id = "c",text = "c",
                                                created_at = "c",
                                                retweets_count = "i",
-                                               likes_count = "i", long_tweet = "i")) 
+                                               likes_count = "i", tweet_length = "i")) 
         
         
         df <- df %>% filter(
           likes_count >= likes,
           retweets_count >= retweets,
           #long_tweet == long
-          tweet_length >= 81
+          tweet_length >= long
         )
         
         
