@@ -4,13 +4,13 @@ nest_asyncio.apply()
 import twint
 import time
 import os
-os.chdir(r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data\mtu_en")
+os.chdir(r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data\mtu_de")
 from datetime import datetime
 
 #%%
 #create date range for wanted dates
 today = datetime.today().strftime('%Y-%m-%d')
-date_list = pd.date_range(start="2019-02-25",end='2021-02-19')
+date_list = pd.date_range(start="2018-12-01",end='2021-02-19')
 date_list = date_list.to_series().dt.date
 
 
@@ -19,7 +19,7 @@ date_list = date_list.to_series().dt.date
 #how long going to sleep after scraping one country done
 
 #how long going to sleep after one day has been scraped
-sleep_day = 5
+sleep_day = 1
 number_tweets = 10000
 
 for date in date_list:
@@ -29,7 +29,7 @@ for date in date_list:
     date1 = date
     date2 = date - pd.Timedelta(days = 1)
     
-    language = "en"
+    language = "de"
     
     config.Search = f"MTU Aero Engines OR @MTUaeroeng  until:{date1} since:{date2} lang:{language}"
     config.Store_object = True 
