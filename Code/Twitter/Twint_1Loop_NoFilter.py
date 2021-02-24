@@ -4,13 +4,13 @@ nest_asyncio.apply()
 import twint
 import time
 import os
-os.chdir(r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data")
+os.chdir(r"C:\Users\lukas\Documents\Uni\Data Science Project\Python\twint_webscraping\data\mtu_en")
 from datetime import datetime
 
 #%%
 #create date range for wanted dates
 today = datetime.today().strftime('%Y-%m-%d')
-date_list = pd.date_range(start="2019-12-01",end=today)
+date_list = pd.date_range(start="2019-02-25",end='2021-02-19')
 date_list = date_list.to_series().dt.date
 
 
@@ -20,7 +20,7 @@ date_list = date_list.to_series().dt.date
 
 #how long going to sleep after one day has been scraped
 sleep_day = 5
-number_tweets = 1000
+number_tweets = 10000
 
 for date in date_list:
     time1 = time.time()
@@ -29,9 +29,9 @@ for date in date_list:
     date1 = date
     date2 = date - pd.Timedelta(days = 1)
     
-    language = "de"
+    language = "en"
     
-    config.Search = f"min_retweets:10 until:{date1} since:{date2} lang:{language}"
+    config.Search = f"MTU Aero Engines OR @MTUaeroeng  until:{date1} since:{date2} lang:{language}"
     config.Store_object = True 
     
     
@@ -39,7 +39,7 @@ for date in date_list:
     #c.Store_csv = True
     config.Limit = number_tweets #number needed to get around 1mio posts per country
     config.Store_json = True
-    config.Output = f'En_NoFilter_{date2}.json'
+    config.Output = f'MTU Aero Engines_{date2}_{language}.json'
     twint.run.Search(config) 
     #search_list = config.search_tweet_list
     
