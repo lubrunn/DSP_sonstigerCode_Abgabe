@@ -68,7 +68,8 @@ term_freq_computer <- function(folder) {
           likes_count >= likes &
           retweets_count >= retweets &
           #long_tweet == long
-          tweet_length >= longs
+          tweet_length >= longs,
+          lang == ????
         )
         
         
