@@ -86,7 +86,7 @@ dup_remover <- function(string){
 ####################################
 
 df_cleaner_english <- function(df){
-print("Started Cleaning dataframe")
+print("Started Cleaning english tweets")
 time1 <- Sys.time()
 # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
 tweets <- df %>% rename("doc_id" = id, "text" =  tweet)
@@ -232,7 +232,7 @@ return(tweets)
 ###########################################
 
 df_cleaner_german <- function(df){
-  print("Started Cleaning dataframe")
+  print("Started Cleaning german tweets")
   time1 <- Sys.time()
   # select only relevant columns and change column names so one can keep meta data when turning data into to corpus
   tweets <- df %>% rename("doc_id" = id, "text" =  tweet)
