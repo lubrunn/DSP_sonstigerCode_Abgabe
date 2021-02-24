@@ -3,6 +3,22 @@ library(dplyr)
 library(tm)
 library(glue)
 
+#################################################################################
+#################################################################################
+
+'
+Here we compute term frequencies per day in order to increase execution speed in the app.
+We preprocess for every possible combination the user will be able to choose.
+We then aggregate each data for the live filtering for the date range. For the
+other filter methods (retweets etc.) each filter has its own file (or its all
+in sql table if we have enough time to upload it all)
+'
+
+
+
+
+#################################################################################
+#################################################################################
 
 setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 ######## read in cleaned data
@@ -12,7 +28,7 @@ folders <- list.files("cleaned")
 
 likes_list <- c(0, 10, 50, 100, 200)
 retweets_list <- c(0, 10, 50, 100, 200)
-long_list <- c(0,1)
+long_list <- c(0,81)
 
 
 
@@ -24,10 +40,10 @@ likes <- 5
 long <- 0
 
 
-
+# define the function which computes word frequencies per day for each filter combination
 term_freq_computer <- function(folder) {  
   
- # files <- list.files(source)
+ files <- list.files(source)
   
   
   
@@ -36,7 +52,7 @@ term_freq_computer <- function(folder) {
     # loop for retweets
     for (retweets in retweets_list){
       #loop for long dummy
-      for (long in long_list){
+      for (longs in long_list){
         #loop over each file
         for (file in files){
           print(glue("Working on {file} for retweets: {retweets}, likes: {likes}, long:{long}"))
@@ -45,14 +61,15 @@ term_freq_computer <- function(folder) {
                          col_types = cols_only(doc_id = "c",text = "c",
                                                created_at = "c",
                                                retweets_count = "i",
-                                               likes_count = "i", long_tweet = "i")) 
+                                               likes_count = "i", tweet_length = "i")) 
         
         
         df <- df %>% filter(
-          likes_count >= likes,
-          retweets_count >= retweets,
+          likes_count >= likes &
+          retweets_count >= retweets &
           #long_tweet == long
-          long_tweet >= long
+          tweet_length >= longs,
+          lang == ????
         )
         
         
@@ -102,7 +119,7 @@ term_freq_computer <- function(folder) {
 
 
 
-
+# run computation for each folder of interest
 folders <- "En_NoFilter"
 files <- files[1:10]
 
