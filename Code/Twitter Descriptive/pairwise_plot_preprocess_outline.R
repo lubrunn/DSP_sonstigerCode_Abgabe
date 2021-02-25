@@ -162,7 +162,7 @@ tweets_section_words_filt <- tweets_section_words %>%
 ######################## live #####################
 ###################################################
 # controllable
-tomatch <- c("")
+tomatch <- ""
 threshold <- 0
 min_corr <- 0.2
 
@@ -170,7 +170,7 @@ min_corr <- 0.2
 # also filter for word frew within this filtered df
 word_cors_pre <- tweets_section_words_filt %>%
   # if list provided to specify tweets to look at then extract only those tweets
-  { if (!is.null(tomatch)) filter(., grepl(paste(tomatch, collapse="|"), text)) else . } %>%
+  { if (tomatch != "") filter(., grepl(paste(tomatch, collapse="|"), text)) else . } %>%
   
   group_by(word) %>%
   filter(n() >= threshold)
@@ -219,7 +219,7 @@ network.D3$nodes <- network.D3$nodes %>% mutate(Degree = (1E-2)*V(network)$degre
 
 
 
-network.D3$links
+
 
 
 
