@@ -47,7 +47,7 @@ df <- df_all %>% filter(
   tweet_length >= length_filter) %>%
   # count number of tweets per bin in likes, length, retweets
   # for company file
-  { if (file == "Companies_all") group_by(company, date,language, 
+  { if (file == "Companies_all.csv") group_by(company, date,language, 
                                         .data[[grouping_variable]]) else group_by(date,language, 
                                                                                   .data[[grouping_variable]])  } %>%
  
@@ -62,7 +62,8 @@ df <- df_all %>% filter(
          tweet_number = sum(c_across(-c("retweets_count",
                                         "likes_count", 
                                         "tweet_length")), na.rm = T))%>%
-  ungroup()
+  ungroup() %>%
+  replace(is.na(.), 0) 
 return(df)
 }
 
@@ -79,7 +80,7 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
       retweets_count >= retweets_filter &
       #long_tweet == long
       tweet_length >= length_filter) %>%
-    { if (file == "Companies_all") group_by(company, date,language) else group_by(date,language)  } %>%
+    { if (file == "Companies_all.csv") group_by(company, date,language) else group_by(date,language)  } %>%
     summarise(mean_rt = mean(retweets_count),
               mean_likes = mean(likes_count),
               mean_length = mean(tweet_length),
@@ -157,22 +158,25 @@ amount of data needed at a time. This way we can vastly increase execution
 speed and reduce live computing
 '
 
+source <- "cleaned/appended"
+histO_cleaner <<- function(source){
 
-for (retweets in retweets_list){
-  for(likes in likes_list){
-    for(longs in long_list){
-      for (folder in folders){
-        # read all dfs (one per day)
-        df <- readr::read_csv(file.path("cleaned/appended" ,glue("{folder}_all.csv")),
-                              col_types = cols_only(
-                                created_at = "c",
-                                retweets_count = "i",
-                                likes_count = "i", tweet_length = "i",
-                                language = "c")) 
-        
-        # call function that wrangles df and saves it
-        data_wrangler_and_saver(df, retweets, likes, longs)
-      } 
+  for (retweets in retweets_list){
+    for(likes in likes_list){
+      for(longs in long_list){
+        for (folder in folders){
+          # read all dfs (one per day)
+          df <- readr::read_csv(file.path(source ,glue("{folder}_all.csv")),
+                                col_types = cols_only(
+                                  created_at = "c",
+                                  retweets_count = "i",
+                                  likes_count = "i", tweet_length = "i",
+                                  language = "c")) 
+          
+          # call function that wrangles df and saves it
+          data_wrangler_and_saver(df, retweets, likes, longs)
+        } 
+      }
     }
   }
 }
