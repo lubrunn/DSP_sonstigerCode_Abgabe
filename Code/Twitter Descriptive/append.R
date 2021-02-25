@@ -87,34 +87,6 @@ company level, goal is to have one df for all company tweets
 '
 
 
-company_appender <- function(source_main, dest, folder, company_folders){
-  df_all <- NULL
-  for (company_folder in company_folders){
-    print(glue("Started appending {company_folder}"))
-    # read entire df for company
-    file_path <- file.path(source_main, folder, company_folder, glue("{folder}_all.csv"))
-    read_csv(file_path,
-             col_types = cols(.default = "c",text = "c",
-                              created_at = "c",
-                              retweets_count = "i",
-                              long = "i", lat = "i",
-                              likes_count = "i", tweet_length = "i"))
-    
-    # append
-    # if first df then set it to df_all otherwise append
-    if (is.null(df_all)){
-      df_all <- df
-    } else {
-      df_all <- rbind(df_all, df)
-    }
-    
-    ### save df
-    file_path <- file.path(dest,  glue("{folder}_all.csv"))
-    write_csv(df_all, file_path)
-  }
-}
-  
-  
 # this function goes thru all folders and calls the appender
 append_all <- function(source_main){
   
@@ -153,6 +125,9 @@ append_all <- function(source_main){
       # days for all companies
       print("Now appending all individually appended company files")
       files <- list.files(dest)
+      # select new destination
+      dest <- file.path(source_main, "appended")
+      # append all single files
       appender(files, source = dest, dest = dest, folder = "Companies",
                comapnies = F)
       
@@ -168,7 +143,7 @@ append_all <- function(source_main){
       # path to en_nofilter/de_nofilter
       source <- file.path(source_main, folder)
       # destination
-      dest <- file.path(source_main, "appended")
+      
       
       # list all files in the source
       files <- list.files(source)
@@ -189,13 +164,6 @@ append_all <- function(source_main){
 ################################################################################
 append_all("cleaned_test")
 
-df_all <- vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned_test/appended/En_NoFilter_all.csv",
-                   col_types = cols(.default = "c",text = "c",
-                                    created_at = "c",
-                                    retweets_count = "i",
-                                    long = "i", lat = "i",
-                                    likes_count = "i", tweet_length = "i"),
-                delim = ",")
 
 
 
