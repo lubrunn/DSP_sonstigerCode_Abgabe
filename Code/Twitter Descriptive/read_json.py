@@ -99,7 +99,7 @@ subfolders = [k.split("_")[0] for k in  os.listdir(os.path.join(source, "Compani
 folder = nofilter_folders[0]
 file = files[0]
 folder = company_folders[0]
-subfolder = subfolders[29]
+subfolder = subfolders[43]
 
 #%%
 
