@@ -374,7 +374,7 @@ df_cleaner_german <- function(df){
 folders <- list.files(path_source)
 
 # select subset of folder
-folders <- c("De_NoFilter")
+folders <- c("Companies")
 
 
 # go thru all main folders 
@@ -409,7 +409,7 @@ for (folder in folders){
     
   } else if (folder == "Companies"){
     # for all company folders go one level deeper
-    subfolders <- list.files(file.path(path_source, folder, subfolder))
+    subfolders <- list.files(file.path(path_source, folder))
     
     for (subfolder in subfolders){
       
@@ -427,7 +427,7 @@ for (folder in folders){
       for (file in files){
         print(glue("Started working on {file}."))
         # load data
-        df <- readr::read_csv(file.path(path_source,folder, file),
+        df <- readr::read_csv(file.path(path_source,folder,subfolder, file),
                               col_types = cols(.default = "c", lat = "d", long = "d",
                                                retweets_count = "i", replies_count = "i",
                                                likes_count = "i", tweet_length = "i"))
@@ -437,8 +437,8 @@ for (folder in folders){
         df_en <- df %>% filter(language == "en")
         
         # clean dataframes
-        df_de <- df_cleaner_german(df)
-        df_en <- df_cleaner_english(df)
+        df_de <- df_cleaner_german(df_de)
+        df_en <- df_cleaner_english(df_en)
         
         #put data back togethter (we store company data together because there arent as many tweets in the company files)
         df <- rbind(df_de, df_en)
