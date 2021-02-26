@@ -170,7 +170,7 @@ source_main <- "cleaned"
 # list all folders in source main
 folders <- list.files(source_main)
 
-folders <- folders[3:4]
+folders <- folders[3]
 
 # start function
 append_all("cleaned", folders)
