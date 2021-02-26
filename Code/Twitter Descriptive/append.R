@@ -11,8 +11,11 @@ this csv will be used for sql, term_freq calc, histogram calc and maybe more
 #################################################################################
 ############################# packages ##########################################
 library(tidyverse)
+<<<<<<< HEAD
 library(vroom)
 library(glue)
+=======
+>>>>>>> parent of 2cda6f9 (Update append.R)
 
 
 
@@ -28,7 +31,7 @@ if (vpc == T) {
 }
 
 ################################################################################
-source_main <- "cleaned_test"
+source_main <- "cleaned"
 
 
 
@@ -36,6 +39,7 @@ source_main <- "cleaned_test"
 
 # function that open each file and appends them together and then saves appended file
 appender <- function(files, source, dest, folder, companies = F){
+<<<<<<< HEAD
   time1 <- Sys.time()
     print(glue("Working on all files in {source}"))
     df_all <- vroom(file.path(source,files),
@@ -53,29 +57,49 @@ appender <- function(files, source, dest, folder, companies = F){
     # for company folder add the company name as column in order to be later able to filter for company names
     if (companies == T){
       print("Working on companies")
+=======
+  df_all <- NULL
+  for (file in files){
+    df <- read_csv(file.path(source, file),
+                   col_types = cols(.default = "c",text = "c",
+                                         created_at = "c",
+                                         retweets_count = "i",
+                                          long = "i", lat = "i",
+                                         likes_count = "i", tweet_length = "i")) 
+    
+    # convert created at to date
+    df$date <- as.Date(df$created_at, "%Y-%m-%d")
+    
+    
+    # for company folder add the company name as column in order to be later able to filter for company names
+>>>>>>> parent of 2cda6f9 (Update append.R)
     # for Johnson & Johnson change name
-      if (folder == "JohnsonJohnson"){
-        df$company <- "Johnson & Johnson"
-      } else {
-        # replace umlaute
-        company_name <- stringi::stri_replace_all_fixed(
-          folder, 
-          c("ä", "ö", "ü", "Ä", "Ö", "Ü"), 
-          c("ae", "oe", "ue", "Ae", "Oe", "Ue"), 
-          vectorize_all = FALSE
-        )
-        df$company <- company_name
-      }
+    if (folder == "JohnsonJohnson"){
+      df$company <- "Johnson & Johnson"
+    } else {
+      # replace umlaute
+      company_name <- stringi::stri_replace_all_fixed(
+        folder, 
+        c("ä", "ö", "ü", "Ä", "Ö", "Ü"), 
+        c("ae", "oe", "ue", "Ae", "Oe", "Ue"), 
+        vectorize_all = FALSE
+      )
+      df$company <- company_name
+    }
+    
+    # if first file in loop set it to df_all otherwise appen
+    if (df_all <- NULL){
+      df_all <- df
+    } else {
+      df_all <- rbind(df_all, df)
     }
     
     
-    
-    
+  }
   
-  print("Saving files")
   # save entire big csv
   file_path <- file.path(dest, glue("{folder}_all.csv"))
-  vroom_write(df_all, file_path, delim = ",")
+  write_csv(df_all, filename)
   
   print(Sys.time() - time1)  
 }
@@ -89,6 +113,36 @@ company level, goal is to have one df for all company tweets
 '
 
 
+<<<<<<< HEAD
+=======
+company_appender <- function(source_main, dest, folder, company_folder){
+  df_all <- NULL
+  for (company_folder in company_folders){
+    # read entire df for company
+    file_path <- file.path(source_main, folder, company_folder, glue("{folder}_all.csv"))
+    read_csv(file_path,
+             col_types = cols(.default = "c",text = "c",
+                              created_at = "c",
+                              retweets_count = "i",
+                              long = "i", lat = "i",
+                              likes_count = "i", tweet_length = "i"))
+    
+    # append
+    # if first df then set it to df_all otherwise append
+    if (df_all <- NULL){
+      df_all <- df
+    } else {
+      df_all <- rbind(df_all, df)
+    }
+    
+    ### save df
+    file_path <- file.path(dest,  glue("{folder}_all.csv"))
+    write_csv(df_all, file_path)
+  }
+}
+  
+  
+>>>>>>> parent of 2cda6f9 (Update append.R)
 # this function goes thru all folders and calls the appender
 append_all <- function(source_main, folders){
   
@@ -97,7 +151,7 @@ append_all <- function(source_main, folders){
   
   # go into each folder
   for (folder in folders){
-    print(glue("Working on {folder}"))
+    
     # if its the company folder
     if (grepl("Companies", folder)) {
       
@@ -105,25 +159,26 @@ append_all <- function(source_main, folders){
       source_all_comp <- file.path(source_main, folder)
       # list all company folder
       company_folders <- list.files(source_all_comp)
-      print("Moving on to company folders")
-      dest <- file.path(source_main, "appended/Companies")
       
       # for each company folder go in 
       for (company_folder in company_folders){
-        print(glue("Working on {company_folder}"))
+        
         # path to individual company folder
         source <- file.path(source_main, folder, company_folder)
-
-        # list all files in individual company folder
+        # same as source just created for clarity (only string no long comp time)
+        dest <- file.path(source_main, "appended/Companies")
+        
+        # list all files in indivdual company folder
         files <- list.files(source)
         
-        # append each file together and save the appended file in the destination
+        # append each file togehter and save the appended file in the destination
         appender(files, source, dest, folder = company_folder, companies = T)
       }
-      print("Finsihed for all companies")
+      
       # then take each appended company df containing all 
       # days and append all company df to one big company df containing all 
       # days for all companies
+<<<<<<< HEAD
       print("Now appending all individually appended company files")
       files <- list.files(dest)
       # select new destination
@@ -135,6 +190,13 @@ append_all <- function(source_main, folders){
       
       
       
+=======
+      for (company_folder in company_folders){
+        dest <- file.path(source_main, "appended/Companies")
+        company_appender(source_main = source_main, dest = dest,
+                         folder = "Companies", company_folder = company_folder)
+      }
+>>>>>>> parent of 2cda6f9 (Update append.R)
       
       
       
@@ -148,13 +210,14 @@ append_all <- function(source_main, folders){
       
       # list all files in the source
       files <- list.files(source)
-      print("Started appending files")
+      
       # call function for each nofilter folder, append every single file and
       # save results in dest
       appender(files, source, dest, folder, companies = F)
     }
   }
   
+<<<<<<< HEAD
 }
 
 
@@ -181,3 +244,6 @@ append_all("cleaned", folders)
 
 
 
+=======
+}
+>>>>>>> parent of 2cda6f9 (Update append.R)
