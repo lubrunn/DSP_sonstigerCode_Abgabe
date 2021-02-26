@@ -50,3 +50,5 @@ print(Sys.time() -  time1)
 
 #disconnect
 DBI::dbDisconnect(con)
+
+
