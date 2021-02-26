@@ -22,16 +22,28 @@ import demoji
 
 
 #%%
-df = pd.read_csv("")
- tweets = []
-for folder in company_folders:
-    file = f"{subfolder}_{date}_{folder.split('_')[1]}.json"
-    path = os.path.join(source,folder,f"{subfolder}_{folder.split('_')[1]}", file)
-    for line in open(raw/En_NoFilter/En_NoFilter/En_NoFilter-2018-11-30.json, 'r',encoding="utf8"):
-        tweets.append(json.loads(line,parse_int=str))
+tweets = []
+
+for line in open("raw/En_NoFilter/En_NoFilter_2018-11-30.json", 'r',encoding="utf8"):
+    tweets.append(json.loads(line,parse_int=str))
 
 # convert to df
 df = pd.DataFrame(tweets)
+
+
+if sum(df["place"] == "") != len(df):
+        coord = df["place"].apply(pd.Series)["coordinates"].swifter.progress_bar(False).apply(pd.Series)
+        coord.rename(columns = {0:"lat", 1:"long"},
+             inplace = True)
+        df = pd.concat([df, coord], axis = 1)
+    
+else:
+    df["lat"] = df["long"] = None
+    df.drop("place", axis = 1, inplace = True)
+
+#%%
+df2 = df.dropna()
+#%%
 #%%
         
 def df_cleaner(df, lang_controller = False):        
