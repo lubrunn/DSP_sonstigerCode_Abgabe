@@ -12,6 +12,7 @@ this csv will be used for sql, term_freq calc, histogram calc and maybe more
 ############################# packages ##########################################
 library(tidyverse)
 library(vroom)
+library(glue)
 
 
 
@@ -35,7 +36,7 @@ source_main <- "cleaned_test"
 
 # function that open each file and appends them together and then saves appended file
 appender <- function(files, source, dest, folder, companies = F){
-
+  time1 <- Sys.time()
     print(glue("Working on all files in {source}"))
     df_all <- vroom(file.path(source,files),
                      col_types = cols(.default = "c",text = "c",
@@ -44,13 +45,14 @@ appender <- function(files, source, dest, folder, companies = F){
                                       long = "i", lat = "i",
                                       likes_count = "i", tweet_length = "i"),
                      delim = ",") 
-    
+    print("Finshed loading files")
     # convert created at to date
     df_all$date <- as.Date(df_all$created_at, "%Y-%m-%d")
-    
+    print("finished working on date conversion")
     
     # for company folder add the company name as column in order to be later able to filter for company names
-    if (companies = T){
+    if (companies == T){
+      print("Working on companies")
     # for Johnson & Johnson change name
       if (folder == "JohnsonJohnson"){
         df$company <- "Johnson & Johnson"
@@ -75,7 +77,7 @@ appender <- function(files, source, dest, folder, companies = F){
   file_path <- file.path(dest, glue("{folder}_all.csv"))
   vroom_write(df_all, file_path, delim = ",")
   
-    
+  print(Sys.time() - time1)  
 }
 
 
@@ -88,11 +90,10 @@ company level, goal is to have one df for all company tweets
 
 
 # this function goes thru all folders and calls the appender
-append_all <- function(source_main){
+append_all <- function(source_main, folders){
   
   
-  # list all folders in source main
-  folders <- list.files(source_main)
+  
   
   # go into each folder
   for (folder in folders){
@@ -129,7 +130,7 @@ append_all <- function(source_main){
       dest <- file.path(source_main, "appended")
       # append all single files
       appender(files, source = dest, dest = dest, folder = "Companies",
-               comapnies = F)
+               companies = F)
       
       
       
@@ -143,7 +144,7 @@ append_all <- function(source_main){
       # path to en_nofilter/de_nofilter
       source <- file.path(source_main, folder)
       # destination
-      
+      dest <- source
       
       # list all files in the source
       files <- list.files(source)
@@ -162,7 +163,17 @@ append_all <- function(source_main){
 ############################## Call Function ###################################
 ################################################################################
 ################################################################################
-append_all("cleaned_test")
+
+# which folders should be appended
+source_main <- "cleaned"
+
+# list all folders in source main
+folders <- list.files(source_main)
+
+folders <- folders[3:4]
+
+# start function
+append_all("cleaned", folders)
 
 
 
