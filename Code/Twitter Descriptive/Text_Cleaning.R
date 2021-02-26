@@ -304,6 +304,14 @@ df_cleaner_german <- function(df){
   # Get rid of hashtags
   tweets$text <- stringr::str_replace_all(tweets$text,"#[a-z,A-Z]*","")
   
+  # remove umlaute and scharfes s
+  tweets$text <- stringi::stri_replace_all_fixed(
+    tweets$text, 
+    c("ä", "ö", "ü", "Ä", "Ö", "Ü", "ß"), 
+    c("ae", "oe", "ue", "Ae", "Oe", "Ue", "ss"), 
+    vectorize_all = F
+  )
+  
   #remove special characters and numbers
   tweets$text <- gsub("[^A-Za-z]", " ", tweets$text)
   
@@ -437,8 +445,11 @@ for (folder in folders){
         df_en <- df %>% filter(language == "en")
         
         # clean dataframes
-        df_de <- df_cleaner_german(df_de)
-        df_en <- df_cleaner_english(df_en)
+        if (dim(df_de)[1] > 0){
+          df_de <- df_cleaner_german(df_de)}
+        if (dim(df_en)[1] > 0){
+          df_en <- df_cleaner_english(df_en)
+        }
         
         #put data back togethter (we store company data together because there arent as many tweets in the company files)
         df <- rbind(df_de, df_en)
