@@ -1,4 +1,5 @@
 library(tidyverse)
+library(vroom)
 setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 
 folders <- list.files("cleaned")
@@ -11,14 +12,14 @@ long_list <- c(0,81)
 
 
 #### for testing
-folder <- folders[3]
+folder <- folders[4]
 # read data
 files <- list.files(file.path("cleaned", folder))
 files <- files[1:10]
 file <- files[1]
-retweets <- 0
-likes <- 0
-longs <- 0
+retweets_filter <- 0
+likes_filter <- 0
+length_filter <- 0
 
 
 
@@ -39,19 +40,40 @@ longs <- 0
  computation would take up to 1 minute per histogram
 '
 hist_data_creator <- function(df, retweets_filter, likes_filter, length_filter, grouping_variable, file){
+
+# different groupings depending on companies
+if (file == "Companies_all.csv"){
+  df <- df %>% filter(
+    # filter out according to loop
+    likes_count >= likes_filter &
+      retweets_count >= retweets_filter &
+      tweet_length >= length_filter) %>%
+    
+    # count number of tweets per bin in likes, length, retweets
+    # for company file
+    group_by(company, date,language,!!as.symbol(grouping_variable)) %>%
+    
+    summarise(n = n())
+  grouping_vars <- quos()
+} else {
+df <-  df %>% filter(
+    # filter out according to loop
+    likes_count >= likes_filter &
+      retweets_count >= retweets_filter &
+      tweet_length >= length_filter) %>%
+    
+    # count number of tweets per bin in likes, length, retweets
+    # for company file
+    group_by(date,!!as.symbol(grouping_variable)) %>%
+    
+    summarise(n = n()) 
+  
+  
+}
+  
+  
 # for retweets hist
-df <- df_all %>% filter(
-  # filter out accoring to loop
-  likes_count >= likes_filter &
-  retweets_count >= retweets_filter &
-  tweet_length >= length_filter) %>%
-  # count number of tweets per bin in likes, length, retweets
-  # for company file
-  { if (file == "Companies_all.csv") group_by(company, date,language, 
-                                        .data[[grouping_variable]]) else group_by(date,language, 
-                                                                                  .data[[grouping_variable]])  } %>%
- 
-  summarise(n = n())  %>%
+df <- df %>%
   # spread dataframe
   pivot_wider(names_from = .data[[grouping_variable]], values_from = n) %>%
   # add values that were used to filter for later filtering
@@ -74,20 +96,42 @@ function that aggregates by day and language and takes the means of likes,
 retweets and tweet_length --> will be used for plotting time series of
 the means according to several filters
 '
-sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filter){
-  df <- df_all %>% filter(
-    likes_count >= likes_filter &
-      retweets_count >= retweets_filter &
-      #long_tweet == long
-      tweet_length >= length_filter) %>%
-    { if (file == "Companies_all.csv") group_by(company, date,language) else group_by(date,language)  } %>%
-    summarise(mean_rt = mean(retweets_count),
-              mean_likes = mean(likes_count),
-              mean_length = mean(tweet_length),
-              std_rt = std(retweets_count),
-              std_links = std(likes_count),
-              std_length = std(tweet_length),
-              count_tweeets = n())  %>%
+sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filter, file){
+  if (file == "Companies_all.csv"){
+    df <- df %>% filter(
+      likes_count >= likes_filter &
+        retweets_count >= retweets_filter &
+        #long_tweet == long
+        tweet_length >= length_filter) %>%
+      group_by(company, date,language)  %>%
+      summarise(mean_rt = mean(retweets_count),
+                mean_likes = mean(likes_count),
+                mean_length = mean(tweet_length),
+                std_rt = std(retweets_count),
+                std_links = std(likes_count),
+                std_length = std(tweet_length),
+                count_tweeets = n()) 
+    
+  } else {
+    df <-  df %>% filter(
+      likes_count >= likes_filter &
+        retweets_count >= retweets_filter &
+        #long_tweet == long
+        tweet_length >= length_filter) %>%
+      group_by(date)   %>%
+      summarise(mean_rt = mean(retweets_count),
+                mean_likes = mean(likes_count),
+                mean_length = mean(tweet_length),
+                std_rt = std(retweets_count),
+                std_links = std(likes_count),
+                std_length = std(tweet_length),
+                count_tweeets = n()) 
+    
+    
+  } 
+  
+  
+  df <- df %>%
     mutate(retweets_count = retweets,
            likes_count = likes,
            tweet_length = longs) %>%
@@ -103,19 +147,27 @@ data_wrangler_and_saver <- function(df_all, retweets, likes, longs, folder){
 ##############################################################################  
 # call function that creates histograms for all three grouping variables
 # for retweets
+print("Computing histogram data for rt")
 df_bins_rt <- hist_data_creator(df_all,retweets_filter =  retweets,
                                 likes_filter = likes,
                                 length_filter = longs,
-                                grouping_variable = "retweets_count")
+                                grouping_variable = "retweets_count",
+                                file)
 # for likes
-df_bins_likes <- hist_data_creator(df_all, retweets, likes, longs, "likes_count")
+print("Computing histogram data for likes")
+df_bins_likes <- hist_data_creator(df_all, retweets, likes, 
+                                   longs, "likes_count",
+                                   file)
 # for tweet length
-df_bins_long <- hist_data_creator(df_all, retweets, likes, longs, "tweet_length")
+print("Computing histogram data for lengths")
+df_bins_long <- hist_data_creator(df_all, retweets, likes, longs, 
+                                  "tweet_length", file)
 
 
-###############################################################################
+
 # call function that computes means by day and language of all variables
-df_sum_stats_n <- sum_stats_creator(df_all,retweets, likes, longs)
+print("Computing sum stats data")
+df_sum_stats_n <- sum_stats_creator(df_all,retweets, likes, longs, file)
 ###############################################################################
 
 # check which name to five file
@@ -158,25 +210,37 @@ amount of data needed at a time. This way we can vastly increase execution
 speed and reduce live computing
 '
 
-source <- "cleaned/appended"
-histO_cleaner <<- function(source){
+source <- "cleaned_test/appended"
+files <- list.files(source)
+histo_cleaner <- function(source){
 
   for (retweets in retweets_list){
     for(likes in likes_list){
       for(longs in long_list){
-        for (folder in folders){
+        for (file in files){
+          print(glue("Working on {file}, rt: {retweets}, likes: {likes}, length: {longs}"))
           # read all dfs (one per day)
-          df <- readr::read_csv(file.path(source ,glue("{folder}_all.csv")),
+          time1 <- Sys.time()
+          df <- vroom(file.path(source ,file),
                                 col_types = cols_only(
-                                  created_at = "c",
+                                  date = "c",
                                   retweets_count = "i",
                                   likes_count = "i", tweet_length = "i",
                                   language = "c")) 
           
           # call function that wrangles df and saves it
           data_wrangler_and_saver(df, retweets, likes, longs)
+          print(Sys.time() - time1)
         } 
       }
     }
   }
 }
+
+
+################################################################################
+################################################################################
+##################################### Call Function ############################
+################################################################################
+################################################################################
+histo_cleaner(source)
