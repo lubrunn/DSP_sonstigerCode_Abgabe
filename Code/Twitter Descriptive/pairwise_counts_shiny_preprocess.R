@@ -59,4 +59,31 @@ con here:
 
 
 
+  
+  
+  
+  
+  #################### part from loop, takes too long --> taken out of analysis
+  pairs_df <- df %>%
+    unnest_tokens(word, text) %>%
+    group_by(date_variable, language_variable) %>%
+    # show all pairs out of all pairs per tweet
+    # feel so forgoten that --> feel so, feel forgotten, feel that, so feel, so forgotten, so that etc.
+    widyr::pairwise_count(word, doc_id, sort = T) %>%
+    rename("weight" = n) %>%
+    filter(weight > threshold_pairs)
+  
+  
+  #remove rows that are the same but item1 and item2 are reversed
+  pairs_df <- pairs_df[!duplicated(t(apply(pairs_df,1,sort))),]
+  
+  # collapse both words
+  pairs_df$pairs <- paste(pairs_df$item1,pairs_df$item2, sep = ", ")
+  pairs_df <-  pairs_df %>% select(pairs, n = weight) %>%
+    pivot_wider(names_from = pairs, values_from = n) %>%
+    ungroup %>%
+    replace(is.na(.), 0) %>%
+    mutate(retweets_count = retweets_filter,
+           likes_count = likes_filter,
+           tweet_length = length_filter) 
 
