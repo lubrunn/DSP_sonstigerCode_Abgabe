@@ -212,6 +212,7 @@ tweets$text <- tm::removeWords(tweets$text,c(tm::stopwords("SMART"),
 tweets$text <- stringr::str_squish(tweets$text)
 
 ########################
+tweets <- tweets %>% tidyr::drop_na("text")
 
 
 # include dummy term when tweet longer than median
@@ -357,7 +358,7 @@ df_cleaner_german <- function(df){
   tweets$text <- stringr::str_squish(tweets$text)
   
   ########################
-  
+  tweets <- tweets %>% tidyr::drop_na("text")
   
   # include dummy term when tweet longer than median
   tweets$long_tweet <- ifelse(tweets$tweet_length > 80, 1, 0)
@@ -373,6 +374,13 @@ df_cleaner_german <- function(df){
 }
 
 
+
+
+
+
+
+
+
 ################################################################################
 ############################### Process ########################################
 ################################################################################
@@ -382,7 +390,7 @@ df_cleaner_german <- function(df){
 folders <- list.files(path_source)
 
 # select subset of folder
-folders <- c("Companies")
+folders <- c("De_NoFilter")
 
 
 # go thru all main folders 
@@ -404,20 +412,30 @@ for (folder in folders){
       
       # clean dataframe
       if (folder == "En_NoFilter"){
-        df <- df_cleaner_english(df)
+        df <- try(df_cleaner_english(df))
+        if(inherits(df, "try-error"))
+        {
+          next
+        }
       } else if (folder == "De_NoFilter"){
-        df <- df_cleaner_german(df)
+        df <- try(df_cleaner_german(df))
+        if(inherits(df, "try_error"))
+        {
+          next
+        }
       }
     
+      if (dim(df)[1] > 0){
     # save df
     path_save <- file.path(path_dest, folder, file)
     readr::write_csv(df, path_save)
     print("File saved, moving on to next file.")
+      }
     }
     
-  } else if (folder == "Companies"){
+  } else if (folder == "Companies2"){
     # for all company folders go one level deeper
-    subfolders <- list.files(file.path(path_source, folder))
+    subfolders <- list.files(file.path(path_source, folder))[40:60]
     
     for (subfolder in subfolders){
       
@@ -446,13 +464,31 @@ for (folder in folders){
         
         # clean dataframes
         if (dim(df_de)[1] > 0){
-          df_de <- df_cleaner_german(df_de)}
+          df_de <- try(df_cleaner_german(df_de))
+          if(inherits(df_de, "try-error"))
+          {
+            print("Error in cleaning german dataframe")
+            next
+          }
+          }
         if (dim(df_en)[1] > 0){
-          df_en <- df_cleaner_english(df_en)
+          df_en <- try(df_cleaner_english(df_en))
+          if(inherits(df_en, "try-error"))
+          {
+            print("Error in cleaning english dataframe")
+            next
+          }
         }
         
+        
+        if (dim(df_de)[1] > 0 & dim(df_en)[1] > 0){
         #put data back togethter (we store company data together because there arent as many tweets in the company files)
         df <- rbind(df_de, df_en)
+        } else if (dim(df_de)[1] > 0 & dim(df_en)[1] == 0){
+          df <- df_de
+        } else if (dim(df_de)[1] == 0 & dim(df_en)[1] > 0){
+        df <- df_en
+          }
         
         # save df
         path_save = file.path(path_dest, folder, subfolder, file)
