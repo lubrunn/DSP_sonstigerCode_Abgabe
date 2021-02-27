@@ -94,8 +94,26 @@ emoji_words <- emoji_words <- c(
   "ass",
   "video",
   "cake",
-  "cool"
+  "cool",
+  "fac",
+  "smil",
+  "see",
+  "evil",
+  "party",
+  "sweat",
+  "thumb",
+  "big",
+  "the",
+  "crying",
+  "fing",
+  "crossed",
+  "god",
+  "watch",
+  "leaf",
+  "food",
+  "arrow"
 )
+
 
 # testing
 
@@ -215,6 +233,9 @@ term_freq_computer <- function(df, file, dest, filename_old,
   # print("Finshed computing frequenies")
   # 
   
+  # convert date as string for sql
+  df$date_variable <- as.character(df$date_variable)
+  
   df1 <- df %>% 
     filter(
       likes_count >= likes_filter &
@@ -223,37 +244,25 @@ term_freq_computer <- function(df, file, dest, filename_old,
         tweet_length >= length_filter
     ) %>%
     
-    unnest_tokens(word, text, to_lower = F) 
+    tidytext::unnest_tokens(word, text, to_lower = F) 
   # turn into datatable
   setDT(df1)
   # aggregate
   df1 <- df1[,.(.N), by = c("date_variable","language_variable", "word")]
   # filter
-  df1 <- df1[N > threshold_single & !is.na(word),]
+  df1 <- df1[N > threshold_single & !is.na(word)&
+               nchar(word) > 1,]
   # spread
-  df_emo1  <- dcast(df1, ... ~ word , value.var = "N")
+  #df_emo1  <- dcast(df1, ... ~ word , value.var = "N")
   
   
   
   
-  df_emo1$retweets_count <- retweets_filter
-  df_emo1$likes_count <- likes_filter
-  df_emo1$tweet_length <- length_filter
-  
-  ####################################
-  # now same but without emoji words
-  
-  df_noemo1 <- df1[!word %in% emoji_words]
-
-  # spread
-  df_noemo1  <- dcast(df_noemo1, ... ~ word , value.var = "N")
-
-
-
-
-  df_noemo1$retweets_count <- retweets_filter
-  df_noemo1$likes_count <- likes_filter
-  df_noemo1$tweet_length <- length_filter
+  df1$retweets_count <- retweets_filter
+  df1$likes_count <- likes_filter
+  df1$tweet_length <- length_filter
+  # add boolean whether the text contains some emoji word
+  df1[, emo := grepl(paste(emoji_words, collapse = "|"), word)]
   
   
   
@@ -267,36 +276,23 @@ term_freq_computer <- function(df, file, dest, filename_old,
         tweet_length >= length_filter
     ) %>%
     
-    unnest_tokens(ngram, text, token = "ngrams", n = 2) 
+    tidytext::unnest_tokens(word, text, token = "ngrams", n = 2) 
   
   # turn into datatable
   setDT(df2)
   # aggregate
-  df2 <- df2[,.(.N), by = c("date_variable","language_variable", "ngram")]
+  df2 <- df2[,.(.N), by = c("date_variable","language_variable", "word")]
   # filter
-  df2 <- df2[N > threshold_pairs & !is.na(ngram),]
+  df2 <- df2[N > threshold_pairs & !is.na(word) &
+               nchar(word) > 2,]
   
+  # add info on used filters for data
+  df2$retweets_count <- retweets_filter
+  df2$likes_count <- likes_filter
+  df2$tweet_length <- length_filter
   
-  
-  
-  # with all words
-  # spread
-  df_emo2  <- dcast(df2, ... ~ ngram , value.var = "N")
-  
-  
-  
-  
-  df_emo2$retweets_count <- retweets_filter
-  df_emo2$likes_count <- likes_filter
-  df_emo2$tweet_length <- length_filter
-  
-  #########################
-  # without emoji words
-  df_noemo2 <- df2[!ngram %in% emoji_words]
-  df_noemo2  <- dcast(df_noemo2, ... ~ ngram , value.var = "N")
-  df_noemo2$retweets_count <- retweets_filter
-  df_noemo2$likes_count <- likes_filter
-  df_noemo2$tweet_length <- length_filter
+  # add boolean whether the text contains some emoji word
+  df2[, emo := grepl(paste(emoji_words, collapse = "|"), word)]
   
   
   
@@ -307,28 +303,19 @@ term_freq_computer <- function(df, file, dest, filename_old,
   
   
   filename_new_single <- glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-  filename_new_single_noemo <- glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}_noemo.csv")
-  
   filename_new_bi <- glue("bigram_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-  filename_new_bi_noemo <- glue("bigram_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}_noemo.csv")
-  
+
   #filename_new_pairs <- glue("pair_count_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
   
-  dest_path_single <- file.path(dest,"emo", filename_new_single)
-  dest_path_single_noemo <- file.path(dest, "noemo", filename_new_single_noemo)
-  
-  dest_path_bi <- file.path(dest,"emo_bi", filename_new_single)
-  dest_path_bi_noemo <- file.path(dest, "noemo_bi", filename_new_single_noemo)
-  
+  dest_path_single <- file.path(dest,"uni", filename_new_single)
+  dest_path_bi <- file.path(dest,"bi", filename_new_single)
+
   #dest_path_pairs <- file.path(dest, filename_new_pairs)
   
   
   #vroom_write(df_emo, dest_path_single, delim = ",")
-  data.table::fwrite(df_emo1, dest_path_single)
-  data.table::fwrite(df_noemo1, dest_path_single_noemo)
-  
-  data.table::fwrite(df_emo2, dest_path_bi)
-  data.table::fwrite(df_noemo2, dest_path_bi_noemo)
+  data.table::fwrite(df1, dest_path_single)
+  data.table::fwrite(df2, dest_path_bi)
   #vroom_write(df_noemo, dest_path_single_noemo, delim = ",")
   
   #vroom_write(pairs_df, dest_path_pairs, delim = ",")
@@ -366,7 +353,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
                                                  likes_count = "i", tweet_length = "i",
                                                  language = "c")) 
         
-        df$date <- as.Date(df$created_at, "%Y-%m-%d")
+        #df$date <- as.Date(df$created_at, "%Y-%m-%d")
         
         
         print("Loaded data, renaming variables")
