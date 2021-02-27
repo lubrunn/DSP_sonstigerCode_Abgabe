@@ -234,7 +234,7 @@ term_freq_computer <- function(df, file, dest, filename_old,
   # 
   
   # convert date as string for sql
-  df$date_variable <- as.character(df$date_variable)
+  # df$date_variable <- as.character(df$date_variable)
   
   df1 <- df %>% 
     filter(
@@ -353,7 +353,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
                                                  likes_count = "i", tweet_length = "i",
                                                  language = "c")) 
         
-        #df$date <- as.Date(df$created_at, "%Y-%m-%d")
+        df$date <- as.Date(df$created_at, "%Y-%m-%d")
         
         
         print("Loaded data, renaming variables")
@@ -434,7 +434,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
               
               filename_old <- strsplit(file, "[.]")[[1]][1]
               
-              if (!file.exists(file.path(dest, "emo",glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")))){
+              if (!file.exists(file.path(dest, "uni",glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")))){
                 
                 
                 
