@@ -52,3 +52,18 @@ print(Sys.time() -  time1)
 DBI::dbDisconnect(con)
 
 
+
+
+
+
+setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases")
+con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
+time1 <- Sys.time()
+df_need <- DBI::dbGetQuery(con, "SELECT retweets_count FROM cleaned_en WHERE date > '2018-11-30' and date < '2021-02-11'")
+print(Sys.time() -  time1)
+
+df_need %>%
+  ggplot() +
+  geom_histogram(aes(retweets_count))
+Sys.time() - time1
+
