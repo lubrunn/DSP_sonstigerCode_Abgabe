@@ -162,7 +162,7 @@ tweets_section_words_filt <- tweets_section_words %>%
 ######################## live #####################
 ###################################################
 # controllable
-tomatch <- ""
+tomatch <- "trump"
 threshold <- 0
 min_corr <- 0.2
 
@@ -188,7 +188,7 @@ network_pre <-  word_cors %>%
   filter(correlation > min_corr) # optional
 
 
-network <- network_pre %>%
+network <- network_pre_trump %>%
   graph_from_data_frame(directed = FALSE)
 
 
