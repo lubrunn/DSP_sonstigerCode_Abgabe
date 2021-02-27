@@ -106,7 +106,7 @@ term_freq_calc2 <- function(df,threshold_single, retweets_filter, likes_filter, 
            likes_count = likes_filter,
            tweet_length = length_filter,
            ) 
-  return(term_frequency)
+  return(term_frequency2)
   Sys.time() - time1
 }
 
@@ -117,7 +117,11 @@ This function takes one already appended file and computes the term frequencies
 per day accroding to given filters
 
 '
-term_freq_computer <- function(df, file, dest){
+term_freq_computer <- function(df, file, dest, filename_old,
+                               likes_filter,
+                               retweets_filter,
+                               length_filter,
+                               long_name){
   # read data
   time2 <- Sys.time()
   
@@ -186,14 +190,14 @@ term_freq_computer <- function(df, file, dest){
   
   
   filename_new_single <- glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-  filename_new_pairs <- glue("pair_count_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
+  #filename_new_pairs <- glue("pair_count_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
   
   dest_path_single <- file.path(dest, filename_new_single)
-  dest_path_pairs <- file.path(dest, filename_new_pairs)
+  #dest_path_pairs <- file.path(dest, filename_new_pairs)
   
   
   vroom_write(term_frequency, dest_path_single, delim = ",")
-  vroom_write(pairs_df, dest_path_pairs, delim = ",")
+  #vroom_write(pairs_df, dest_path_pairs, delim = ",")
   
   print(glue("Entire term freq computation took {Sys.time()- time2}"))
 }
@@ -318,7 +322,12 @@ for (folder in folders){
                 print(glue("Working on {file} for retweets: {retweets_filter}, likes: {likes_filter}, long:{length_filter}"))
                 term_freq_computer(df, 
                                    file = file, 
-                                   dest = dest)
+                                   dest = dest,
+                                   filename_old,
+                                   likes_filter,
+                                   retweets_filter,
+                                   length_filter,
+                                   long_name = long_name)
                 print(glue("Process for {file} took {Sys.time() - time1}"))
                 
               } else{
@@ -355,9 +364,9 @@ for (folder in folders){
 
 
 # for testing
-retweets_filter <- 0
-likes_filter <- 0
-length_filter <- 0
+# retweets_filter <- 200
+# likes_filter <- 200
+# length_filter <- 0
 
 
 
@@ -373,7 +382,7 @@ folders_comp <- "Companies
 
 
 "
-fodlers <- "En_NoFilter"
+folders <- "En_NoFilter"
 folder <- folders[1]
 
 file <- files[1]
@@ -383,7 +392,7 @@ file <- files[1]
 ################################################################################
 ################################ Call function #################################
 # For NoFilter
-compute_all_freq(source_main = source_main_NoFilter, folders = folders_NoFilter, 
+compute_all_freq(source_main = source_main_NoFilter, folders = folders_NoFilter[1], 
                  retweets_list, likes_list, long_list)
 
 
