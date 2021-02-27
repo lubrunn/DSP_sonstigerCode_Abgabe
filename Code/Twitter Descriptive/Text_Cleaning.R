@@ -419,7 +419,7 @@ for (folder in folders){
         }
       } else if (folder == "De_NoFilter"){
         df <- try(df_cleaner_german(df))
-        if(inherits(df, "try_error"))
+        if(inherits(df, "try-error"))
         {
           next
         }
