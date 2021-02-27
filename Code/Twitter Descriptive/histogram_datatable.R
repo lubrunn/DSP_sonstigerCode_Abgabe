@@ -66,8 +66,8 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   ######## data.table
   
   
-  
-  dt2 <- dcast(dt, date ~ retweets_count , value.var = "N")
+  fmla <- glue("... ~ {grouping_variable}")
+  dt2 <- dcast(dt, fmla , value.var = "N")
   
   # add row sums
   dt2$number_tweets <- rowSums(dt2[,!c("date")],na.rm=TRUE)
@@ -79,7 +79,7 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   # remove NAs
   dt2 <- setnafill(dt2, fill=0)
   print(glue("{file} for {grouping_variable} took {Sys.time() - time_hist)}"))
-  return(df)
+  return(dt2)
   
 }
 
@@ -93,52 +93,61 @@ the means according to several filters
 sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filter, file){
   time_sum <- Sys.time()
   if (file == "Companies_all.csv"){
-    df <- df %>% filter(
-      likes_count >= likes_filter &
-        retweets_count >= retweets_filter &
-        #long_tweet == long
-        tweet_length >= length_filter) %>%
-      group_by(company, date,language)  %>%
-      summarise(mean_rt = mean(retweets_count),
-                mean_likes = mean(likes_count),
-                mean_length = mean(tweet_length),
-                std_rt = std(retweets_count),
-                std_links = std(likes_count),
-                std_length = std(tweet_length),
-                count_tweeets = n()) 
+    dt <- df_orig[retweets_count >= retweets_filter &
+                    likes_count >= likes_filter &
+                    tweet_length >= length_filter,
+                  .(.N,
+                    mean_rt = mean(retweets_count),
+                    mean_likes = mean(likes_count),
+                    mean_length = mean(tweet_length),
+                    median_rt = median(retweets_count),
+                    median_likes = median(likes_count),
+                    median_length = median(tweet_length),
+                    
+                    std_rt = sd(retweets_count),
+                    std_likes = sd(likes_count),
+                    std_length = sd(tweet_length)), by = c("company", "date", "language")]
     
-    
+    # remove NAs
+    dt[,!c("date", "language", "company")] <- setnafill(dt[,!c("date", "language")], fill=0)
     
     
     
     
     
   } else {
-    df <-  df %>% filter(
-      likes_count >= likes_filter &
-        retweets_count >= retweets_filter &
-        #long_tweet == long
-        tweet_length >= length_filter) %>%
-      group_by(date)   %>%
-      summarise(mean_rt = mean(retweets_count),
-                mean_likes = mean(likes_count),
-                mean_length = mean(tweet_length),
-                std_rt = std(retweets_count),
-                std_links = std(likes_count),
-                std_length = std(tweet_length),
-                count_tweeets = n()) 
-    
+    dt <- df_orig[retweets_count >= retweets_filter &
+                    likes_count >= likes_filter &
+                    tweet_length >= length_filter,
+                  .(.N,
+                    mean_rt = mean(retweets_count),
+                    mean_likes = mean(likes_count),
+                    mean_length = mean(tweet_length),
+                    median_rt = median(retweets_count),
+                    median_likes = median(likes_count),
+                    median_length = median(tweet_length),
+                    
+                    std_rt = sd(retweets_count),
+                    std_likes = sd(likes_count),
+                    std_length = sd(tweet_length)), by = c("date", "language")]
+                    # remove NAs
+                    dt[,!c("date", "language")] <- setnafill(dt[,!c("date", "language")], fill=0)
     
   } 
   
   
-  df <- df %>%
-    mutate(retweets_count = retweets,
-           likes_count = likes,
-           tweet_length = longs) %>%
-    ungroup()
+  
+
+  
+  dt$retweets_count <- retweets_filter
+  dt$likes_count <- likes_filter
+  dt$tweet_length <- length_filter
+  
+  
+  
+  
+  return(dt)
   print(glue("{file} took {Sys.time() - time_sum}"))
-  return(df)
   
 }
 
