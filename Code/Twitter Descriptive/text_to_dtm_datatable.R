@@ -190,7 +190,7 @@ term_freq_computer <- function(df, file, dest, filename_old,
   
   # 1 percent of average number of tweets per day
   threshold_single <- round(0.01 *  mean(num_tweets$tweets_amnt))
-  #threshold_pairs <- round(0.001 *  mean(num_tweets$tweets_amnt))
+  threshold_pairs <- round(0.001 *  mean(num_tweets$tweets_amnt))
   
   
   
@@ -240,7 +240,7 @@ term_freq_computer <- function(df, file, dest, filename_old,
   df_emo1$likes_count <- likes_filter
   df_emo1$tweet_length <- length_filter
   
-  
+  ####################################
   # now same but without emoji words
   
   df_noemo1 <- df1[!word %in% emoji_words]
@@ -257,7 +257,7 @@ term_freq_computer <- function(df, file, dest, filename_old,
   
   
   
-  
+  ############################
   ##### bigrams
   df2 <- df %>% 
     filter(
@@ -275,23 +275,28 @@ term_freq_computer <- function(df, file, dest, filename_old,
   df2 <- df2[,.(.N), by = c("date_variable","language_variable", "ngram")]
   # filter
   df2 <- df2[N > threshold_pairs & !is.na(ngram),]
+  
+  
+  
+  
+  # with all words
   # spread
-  df2  <- dcast(df2, ... ~ ngram , value.var = "N")
+  df_emo2  <- dcast(df2, ... ~ ngram , value.var = "N")
   
   
   
   
-  dt2$retweets_count <- retweets_filter
-  dt2$likes_count <- likes_filter
-  dt2$tweet_length <- length_filter
+  df_emo2$retweets_count <- retweets_filter
+  df_emo2$likes_count <- likes_filter
+  df_emo2$tweet_length <- length_filter
   
-  
-  
-  
-  
-  
-  dt_noemo <- dt[!word %in% emoji_words]
-  
+  #########################
+  # without emoji words
+  df_noemo2 <- df2[!ngram %in% emoji_words]
+  df_noemo2  <- dcast(df_noemo2, ... ~ ngram , value.var = "N")
+  df_noemo2$retweets_count <- retweets_filter
+  df_noemo2$likes_count <- likes_filter
+  df_noemo2$tweet_length <- length_filter
   
   
   
@@ -304,17 +309,26 @@ term_freq_computer <- function(df, file, dest, filename_old,
   filename_new_single <- glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
   filename_new_single_noemo <- glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}_noemo.csv")
   
+  filename_new_bi <- glue("bigram_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+  filename_new_bi_noemo <- glue("bigram_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}_noemo.csv")
+  
   #filename_new_pairs <- glue("pair_count_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
   
   dest_path_single <- file.path(dest,"emo", filename_new_single)
   dest_path_single_noemo <- file.path(dest, "noemo", filename_new_single_noemo)
   
+  dest_path_bi <- file.path(dest,"emo_bi", filename_new_single)
+  dest_path_bi_noemo <- file.path(dest, "noemo_bi", filename_new_single_noemo)
+  
   #dest_path_pairs <- file.path(dest, filename_new_pairs)
   
   
   #vroom_write(df_emo, dest_path_single, delim = ",")
-  data.table::fwrite(df_emo, dest_path_single)
-  data.table::fwrite(df_noemo, dest_path_single_noemo)
+  data.table::fwrite(df_emo1, dest_path_single)
+  data.table::fwrite(df_noemo1, dest_path_single_noemo)
+  
+  data.table::fwrite(df_emo2, dest_path_bi)
+  data.table::fwrite(df_noemo2, dest_path_bi_noemo)
   #vroom_write(df_noemo, dest_path_single_noemo, delim = ",")
   
   #vroom_write(pairs_df, dest_path_pairs, delim = ",")
@@ -333,9 +347,9 @@ term_freq_computer <- function(df, file, dest, filename_old,
 # define the function which computes word frequencies per day for each filter combination
 
 
-folder <- folders_NoFilter[1]
-file <- files[1]
-source_main = source_main_NoFilter
+# folder <- folders_NoFilter[1]
+# file <- files[1]
+# source_main = source_main_NoFilter
 
 compute_all_freq <- function(source_main, folders, retweets_list, likes_list, long_list){
   for (folder in folders){
