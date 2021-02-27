@@ -6,6 +6,8 @@ df <- vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/En_NoFilter
               language = "c"))
 
 df$date <- as.Date(df$created_at, "%Y-%m-%d")
+df <- df %>% rename(date_variable = date, 
+                    language_variable = language)
 
 
 
