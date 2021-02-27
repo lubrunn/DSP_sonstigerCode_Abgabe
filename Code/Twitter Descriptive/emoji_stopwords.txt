@@ -58,7 +58,24 @@ c(
 "ass",
 "video",
 "cake",
-"cool"
+"cool",
+"fac",
+"smil",
+"see",
+"evil",
+"party",
+"sweat",
+"thumb",
+"big",
+"the",
+"crying",
+"fing",
+"crossed",
+"god",
+"watch",
+"leaf",
+"food",
+"arrow"
 )
 
 
