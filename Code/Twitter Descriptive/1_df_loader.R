@@ -1,4 +1,4 @@
-df <- vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/En_NoFilter/En_NoFilter_2018-11-30.csv",
+df <- vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/De_NoFilter/De_NoFilter_2018-11-30.csv",
             col_types = cols(.default = "c",
               created_at = "c",
               retweets_count = "i",
