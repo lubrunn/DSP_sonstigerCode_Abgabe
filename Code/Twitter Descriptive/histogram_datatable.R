@@ -89,6 +89,8 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   dt$likes_count_filter <- likes_filter
   dt$tweet_length_filter <- length_filter
   
+  dt$date <- as.character(dt$date)
+  
   # remove NAs
   #dt2 <- setnafill(dt2, fill=0)
   print(glue("{file} for {grouping_variable} took {Sys.time() - time_hist}"))
@@ -221,12 +223,37 @@ data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, lengt
   setwd("C:/Users/lukas/Documents/SQLiteStudio/databases")
   con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
   
+  # write data to sql for rt histo
   RSQLite::dbWriteTable(
     con,
     "histo_rt_en",
     df_bins_rt,
     append = T
     )
+  
+  # for likes histo
+  RSQLite::dbWriteTable(
+    con,
+    "likes_rt_en",
+    df_bins_likes,
+    append = T
+  )
+  
+  # for length
+  RSQLite::dbWriteTable(
+    con,
+    "histo_len_en",
+    df_bins_long,
+    append = T
+  )
+  
+  # for sum stats
+  RSQLite::dbWriteTable(
+    con,
+    "sum_stats_en",
+    df_sum_stats,
+    append = T
+  )
   
   DBI::dbDisconnect(con)
   setwd(old_wd)
