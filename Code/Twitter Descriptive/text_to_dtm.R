@@ -141,34 +141,12 @@ term_freq_computer <- function(df, file, dest){
   
   # 1 percent of average number of tweets per day
   threshold_single <- round(0.01 *  mean(num_tweets$tweets_amnt))
-  # threshold_pairs <- round(0.001 *  mean(num_tweets$tweets_amnt))
+  #threshold_pairs <- round(0.001 *  mean(num_tweets$tweets_amnt))
   
   
+   
   
-  
-  #b <- df %>% filter(date_variable == "2020-10-30")
-  #c <- head(b, 1850)
-  #d <- c[1850,]
-  # compute term frequencies for the entire day
-  # term_frequency <- df %>% filter(
-  #   likes_count >= likes_filter &
-  #     retweets_count >= retweets_filter &
-  #     #long_tweet == long
-  #     tweet_length >= length_filter)%>%
-  #    
-  #   tidytext::unnest_tokens(word, text) %>%
-  #   group_by(date_variable, language_variable, word) %>%
-  #   summarise(n = n())  %>% 
-  #   filter(n > threshold_single) %>%
-  #   pivot_wider(names_from = word, values_from = n)  %>%
-  #   ungroup() %>%
-  #   #replace_na(list(0)) %>%
-  #   #left_join(num_tweets, by = c("date_variable","language_variable")) %>%
-  #   mutate(retweets_count = retweets_filter,
-  #          likes_count = likes_filter,
-  #          tweet_length = length_filter,
-  #          across(everything(), ~replace_na(.x, 0))) 
-  # Sys.time() - time2
+
   
   select<-function(df,threshold_single, retweets_filter, likes_filter, length_filter){
     
@@ -188,20 +166,34 @@ term_freq_computer <- function(df, file, dest){
   print("Finshed computing frequenies")
   
   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   # save df
   
   
   
   
   filename_new_single <- glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-  #filename_new_pairs <- glue("term_freq_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
+  filename_new_pairs <- glue("pair_count_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
   
   dest_path_single <- file.path(dest, filename_new_single)
-  #dest_path_pairs <- file.path(dest, filename_new_pairs)
+  dest_path_pairs <- file.path(dest, filename_new_pairs)
   
   
   vroom_write(term_frequency, dest_path_single, delim = ",")
-  #vroom_write(pairs_df, dest_path_pairs, delim = ",")
+  vroom_write(pairs_df, dest_path_pairs, delim = ",")
   
   print(glue("Entire term freq computation took {Sys.time()- time2}"))
 }
@@ -363,9 +355,9 @@ for (folder in folders){
 
 
 # for testing
-retweets_filter <- 200
-likes_filter <- 200
-length_filter <- 200
+retweets_filter <- 0
+likes_filter <- 0
+length_filter <- 0
 
 
 
