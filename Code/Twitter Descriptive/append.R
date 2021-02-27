@@ -42,18 +42,21 @@ appender <- function(files, source, dest, folder, companies = F, filename = NA){
   df_all <- NULL
   for (file in files){
     print(glue("Working on {file}"))
-    df <- read_csv(file.path(source, file),
-                   col_types = cols(.default = "c",text = "c",
-                                    created_at = "c",
-                                    retweets_count = "i",
-                                    long = "i", lat = "i",
-                                    likes_count = "i", tweet_length = "i"),
+    df <- vroom(file.path(source, file),
+                   col_types = cols_only(doc_id = "c",text = "c",
+                                         user_id = "c",
+                                         username = "c",
+                                         created_at = "c",
+                                         retweets_count = "i",
+                                         language = "c",
+                                         likes_count = "i", tweet_length = "i"),
                    delim = ",") 
     
     print("Loaded data, converting date")
     # convert created at to date
     df$date <- as.Date(df$created_at, "%Y-%m-%d")
     
+    df <- df %>% tidyr::drop_na("text")
     
     # for company folder add the company name as column in order to be later able to filter for company names
     # for Johnson & Johnson change name
@@ -276,7 +279,24 @@ final_appender <- function(source_main, dest, lang){
 }
 
 
+# which folders should be appended
+source_main <- "cleaned"
 
+# list all folders in source main
+folders <- list.files(source_main)
+
+folders <- folders[4]
+
+# start function
+append_all(source_main, folders)
+
+
+
+dest <- "appended"
+lang = "En"
+
+
+#final_appender(source_main,dest = "appended", "En")
 
 
 
