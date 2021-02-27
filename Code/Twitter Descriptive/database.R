@@ -67,3 +67,18 @@ df_need %>%
   geom_histogram(aes(retweets_count))
 Sys.time() - time1
 
+
+
+####################### upload data
+## test uploading to sql
+setwd("C:/Users/lukas/Documents/SQLiteStudio/databases")
+con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
+
+RSQLite::dbWriteTable(
+  con,
+  "test_term_freq",
+  df_all_,
+  overwrite = T)
+
+DBI::dbDisconnect(con)
+
