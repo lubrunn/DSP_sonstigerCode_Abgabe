@@ -60,10 +60,10 @@ term_freq_calc1 <- function(df,threshold_single, retweets_filter, likes_filter, 
       retweets_count >= retweets_filter &
       #long_tweet == long
       tweet_length >= length_filter)%>%
-    
+
     tidytext::unnest_tokens(word, text, to_lower = F) %>%
     group_by(date_variable, language_variable, word) %>%
-    summarise(n = n())  %>% 
+    summarise(n = n())  %>%
     filter(n > threshold_single) %>%
     pivot_wider(names_from = word, values_from = n)  %>%
     ungroup() %>%
@@ -74,7 +74,19 @@ term_freq_calc1 <- function(df,threshold_single, retweets_filter, likes_filter, 
       retweets_count = retweets_filter,
            likes_count = likes_filter,
            tweet_length = length_filter
-           ) 
+           )
+  
+  # term_frequency <- df %>%
+  #   
+  #   filter(
+  #     likes_count >= likes_filter &
+  #       retweets_count >= retweets_filter &
+  #       #long_tweet == long
+  #       tweet_length >= length_filter
+  #   ) %>%
+  #   
+  #   unnest_tokens(word, text, to_lower = F) 
+  
   return(term_frequency)
   Sys.time() - time1
 }
@@ -136,7 +148,7 @@ term_freq_computer <- function(df, file, dest, filename_old,
   num_tweets <- df %>% filter(
     likes_count >= likes_filter &
       retweets_count >= retweets_filter &
-      
+
       tweet_length >= length_filter)%>%
     group_by(date_variable, language_variable) %>%
     summarise(tweets_amnt = n()) %>%
@@ -152,7 +164,7 @@ term_freq_computer <- function(df, file, dest, filename_old,
   
 
   
-  select<-function(df,threshold_single, retweets_filter, likes_filter, length_filter){
+  selector<-function(df,threshold_single, retweets_filter, likes_filter, length_filter){
     
     term_frequency1 <- try(term_freq_calc1(df,threshold_single, retweets_filter, likes_filter, length_filter))
     if(is(term_frequency1, "try-error")) {
@@ -166,13 +178,27 @@ term_freq_computer <- function(df, file, dest, filename_old,
   # random non reproduciable errors at times, other funciton is more consistent but takes
   # twice as long
   print("Started computing frequencies")
-  term_frequency <- select(df,threshold_single, retweets_filter, likes_filter, length_filter)
+  term_frequency <- selector(df,threshold_single, retweets_filter, likes_filter, length_filter)
   print("Finshed computing frequenies")
   
   
   
   
-  
+  # # turn into datatable
+  # term_frequency <- data.table::as.data.table(term_frequency)
+  # # aggregate
+  # term_frequency <- term_frequency[,.(.N), by = c("date_variable","language_variable", "word")]
+  # # filter
+  # term_frequency <- term_frequency[N > threshold_single & !is.na(word),]
+  # # spread
+  # term_frequency  <- dcast(term_frequency, ... ~ word , value.var = "N")
+  # 
+  # 
+  # 
+  # 
+  # term_frequency$retweets_count <- retweets_filter
+  # term_frequency$likes_count <- likes_filter
+  # term_frequency$tweet_length <- length_filter
   
   
   
