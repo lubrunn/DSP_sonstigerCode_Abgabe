@@ -4,6 +4,7 @@ library(tm)
 library(glue)
 library(vroom)
 library(tidyr)
+library(data.table)
 
 #################################################################################
 #################################################################################
@@ -346,7 +347,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
     for (file in files){
       
       if (grepl("NoFilter", folder)){
-        df <- vroom::vroom(file.path(source_main,folder, file),
+        df <- read_csv(file.path(source_main,folder, file),
                            col_types = cols_only(doc_id = "c",text = "c",
                                                  created_at = "c",
                                                  retweets_count = "i",
@@ -363,7 +364,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
         
       } else if(folder == "Companies"){
         
-        df <- vroom::vroom(file.path(source_main,folder, file),
+        df <- read_csv(file.path(source_main,folder, file),
                            col_types = cols_only(doc_id = "c",text = "c",
                                                  company = "c",
                                                  created_at = "c",
