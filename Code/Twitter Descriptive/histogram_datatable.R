@@ -93,6 +93,23 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   
   # remove NAs
   #dt2 <- setnafill(dt2, fill=0)
+  
+  
+  
+  
+  
+  
+  #############################################################
+  ########## placeholder to include company name for companies
+  if (folder == "Companies"){
+    df$company <- folder
+  }
+  
+  ###
+  
+  
+  ##################################################################
+  
   print(glue("{file} for {grouping_variable} took {Sys.time() - time_hist}"))
   return(dt)
   
@@ -159,6 +176,16 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
   
   
   
+  #############################################################
+  ########## placeholder to include company name for companies
+  if (folder == "Companies"){
+    df$company <- folder
+  }
+  
+  ###
+  
+  
+  ##################################################################
   
   return(dt)
   print(glue("{file} took {Sys.time() - time_sum}"))
@@ -208,19 +235,19 @@ data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, lengt
   
   ##### save files
   print(glue("Saving files for {folder}, rt: {retweets_filter}, likes: {likes_filter}, length:{length_filter}"))
-  # vroom_write(df_bins_rt, file.path("plot_data", folder ,filename_rt),
-  #             delim = ",")
-  # vroom_write(df_bins_likes, file.path("plot_data", folder ,filename_likes),
-  #             delim = ",")
-  # vroom_write(df_bins_long, file.path("plot_data", folder ,filename_long),
-  #             delim = ",")
-  # vroom_write(df_sum_stats, file.path("plot_data", folder ,filename_sum),
-  #             delim = ",")
+  vroom_write(df_bins_rt, file.path("plot_data", folder ,filename_rt),
+              delim = ",")
+  vroom_write(df_bins_likes, file.path("plot_data", folder ,filename_likes),
+              delim = ",")
+  vroom_write(df_bins_long, file.path("plot_data", folder ,filename_long),
+              delim = ",")
+  vroom_write(df_sum_stats, file.path("plot_data", folder ,filename_sum),
+              delim = ",")
   
   
   ##### upload data
   old_wd <- getwd()
-  setwd("C:/Users/lukas/Documents/SQLiteStudio/databases")
+  setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases")
   con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
   
   # write data to sql for rt histo
@@ -234,7 +261,7 @@ data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, lengt
   # for likes histo
   RSQLite::dbWriteTable(
     con,
-    "likes_rt_en",
+    "histo_likes_en",
     df_bins_likes,
     append = T
   )
@@ -294,7 +321,8 @@ for (folder in folders){
        
        dt <- fread(file.path(source ,file),
                    select = c("company", "text", "date", "language", "retweets_count", 
-                              "likes_count", "tweet_length")) 
+                              "likes_count", "tweet_length"),
+                   colClasses = c("date" = "character")) 
        
        
        
@@ -305,7 +333,8 @@ for (folder in folders){
        
        df <- fread(file.path(source, folder ,file),
                    select = c("date","text", "language", "retweets_count", 
-                              "likes_count", "tweet_length")) 
+                              "likes_count", "tweet_length"),
+                   colClasses = c("date" = "character")) 
      
      
      
@@ -390,7 +419,7 @@ folders <- "En_NoFilter"
 #files <- list.files(source)[grepl(".csv",source)]
 
 
-histo_cleaner(source, folders)
+#histo_cleaner(source, folders)
 
 
 
