@@ -63,6 +63,7 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
                     likes_count >= likes_filter &
                     tweet_length >= length_filter,
                   .(.N), by = c("company", "date", "language", grouping_variable)]
+    dt$company <- file
     
   } else if (grepl("NoFilter", file)) {
     
@@ -101,9 +102,7 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   
   #############################################################
   ########## placeholder to include company name for companies
-  if (folder == "Companies"){
-    df$company <- folder
-  }
+ 
   
   ###
   
@@ -419,7 +418,7 @@ folders <- "En_NoFilter"
 #files <- list.files(source)[grepl(".csv",source)]
 
 
-#histo_cleaner(source, folders)
+histo_cleaner(source, folders)
 
 
 
