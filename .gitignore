@@ -12,3 +12,4 @@ Code/Sentiment/Shiny_code/__pycache__/tweet_collector.cpython-37.pyc
 Code/Sentiment/Shiny_code/__pycache__/get_date.cpython-37.pyc
 Code/Twitter Descriptive/repalce_emojis.py
 Code/Twitter Descriptive/test_stemmers.R
+Code/Twitter Descriptive/1_df_loader.R
