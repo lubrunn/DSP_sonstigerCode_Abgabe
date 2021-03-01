@@ -120,17 +120,17 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
                  mean_sentiment_rt = mean(sentiment_rt),
                  mean_sentiment_likes = mean(sentiment_likes),
                  mean_sentiment_tweet_length = mean(sentiment_length),
-
+                 
                  
                  median_rt = as.numeric(median(retweets_count)),
                  median_likes = as.numeric(median(likes_count)),
                  median_length = as.numeric(median(tweet_length)),
-
+                 
                  median_sentiment = as.numeric(median(sentiment)),
                  median_sentiment_rt = as.numeric(median(sentiment_rt)),
                  median_sentiment_likes = as.numeric(median(sentiment_likes)),
                  median_sentiment_tweet_length = as.numeric(median(sentiment_length)),
-
+                 
                  std_rt = sd(retweets_count),
                  std_likes = sd(likes_count),
                  std_length = sd(tweet_length),
@@ -139,8 +139,50 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
                  std_sentiment = sd(sentiment),
                  std_sentiment_rt = sd(sentiment_rt),
                  std_sentiment_likes = sd(sentiment_likes),
-                 std_sentiment_tweet_length = sd(sentiment_length)
-                 ), by = c("created_at", "language")]
+                 std_sentiment_tweet_length = sd(sentiment_length),
+                 
+                 
+                 ##### min
+                 min_rt = min(retweets_count),
+                 min_likes = min(likes_count),
+                 min_length = min(tweet_length),
+                 
+                 min_sentiment = min(sentiment),
+                 min_sentiment_rt = min(sentiment_rt),
+                 min_sentiment_likes = min(sentiment_likes),
+                 min_sentiment_tweet_length = min(sentiment_length),
+                 
+                 ##### max
+                 max_rt = max(retweets_count),
+                 max_likes = max(likes_count),
+                 max_length = max(tweet_length),
+                 
+                 max_sentiment = max(sentiment),
+                 max_sentiment_rt = max(sentiment_rt),
+                 max_sentiment_likes = max(sentiment_likes),
+                 max_sentiment_tweet_length = max(sentiment_length),
+                 
+                 
+                 ## 25th quantile
+                 q25_rt = quantile(retweets_count, 0.25),
+                 q25_likes = quantile(likes_count, 0.25),
+                 q25_length = quantile(tweet_length, 0.25),
+                 
+                 q25_sentiment = quantile(sentiment, 0.25),
+                 q25_sentiment_rt = quantile(sentiment_rt, 0.25),
+                 q25_sentiment_likes = quantile(sentiment_likes, 0.25),
+                 q25_sentiment_tweet_length = quantile(sentiment_length, 0.25),
+                 
+                 ### 75 quantile
+                 q75_rt = quantile(retweets_count, 0.75),
+                 q75_likes = quantile(likes_count, 0.75),
+                 q75_length = quantile(tweet_length, 0.75),
+                 
+                 q75_sentiment = quantile(sentiment, 0.75),
+                 q75_sentiment_rt = quantile(sentiment_rt, 0.75),
+                 q75_sentiment_likes = quantile(sentiment_likes, 0.75),
+                 q75_sentiment_tweet_length = quantile(sentiment_length, 0.75)
+               ), by = c("created_at", "language")]
     
     
   
