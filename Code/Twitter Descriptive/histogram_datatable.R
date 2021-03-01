@@ -319,9 +319,10 @@ for (folder in folders){
      if (grepl("Companies", file)){
        
        dt <- fread(file.path(source ,file),
-                   select = c("company", "text", "date", "language", "retweets_count", 
+                   select = c("doc_id", "company", "text", "date", "language", "retweets_count", 
                               "likes_count", "tweet_length"),
-                   colClasses = c("date" = "character")) 
+                   colClasses = c("date" = "character",
+                                  "doc_id" = "character")) 
        
        
        
