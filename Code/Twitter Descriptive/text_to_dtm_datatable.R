@@ -181,7 +181,8 @@ This function takes one already appended file and computes the term frequencies
 per day accroding to given filters
 
 '
-term_freq_computer <- function(df, file, dest, filename_old,
+term_freq_computer <- function(df, file, dest, 
+                               filename_old,
                                retweets_filter,
                                likes_filter,
                                length_filter,
@@ -417,7 +418,12 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
                 time1 <- Sys.time()
                 term_freq_computer(source = source_main, 
                                    file = file, 
-                                   dest = dest)
+                                   dest = dest,
+                                   retweets_filter = retweets_filter,
+                                   likes_filter = likes_filter,
+                                   length_filter = length_filter,
+                                   filname_old = filename_old,
+                                   long_name = long_name)
                 print(Sys.time() - time1)
                 
               } else{
