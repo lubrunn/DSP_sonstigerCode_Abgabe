@@ -51,32 +51,24 @@ if (vpc == T) {
  the live computation would be somewhat fast enough but for broad filter (retweets  >0)
  computation would take up to 1 minute per histogram
 '
-hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, grouping_variable, file){
+hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, grouping_variable, file, company_name = NA){
   time_hist <- Sys.time()
-  # different groupings depending on companies
-  if (grepl("Companies", file)){
+ 
     
+  # filter data, group ny and count for gorups  
+  dt <- df[retweets_count >= retweets_filter &
+             likes_count >= likes_filter &
+             tweet_length >= length_filter,
+           .(.N), by = c("created_at", grouping_variable)]
     
-    
-    
-    dt <- dt[retweets_count >= retweets_filter &
-               likes_count >= likes_filter &
-               tweet_length >= length_filter,
-             .(.N), by = c("company", "created_at", "language", grouping_variable)]
-    
-  } else {
-    
-    
-    
-    dt <- df[retweets_count >= retweets_filter &
-               likes_count >= likes_filter &
-               tweet_length >= length_filter,
-             .(.N), by = c("created_at", grouping_variable)]
-    
-  }
   
   
-  ######## data.table
+  
+  ########## add infos
+  # if its a file from a company folder add the company name as column
+  if (!is.na(company_name)){
+    dt$company <- company_name
+  } 
   
   
   
@@ -95,10 +87,7 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   
   #############################################################
   ########## placeholder to include company name for companies
-  if (folder == "Companies"){
-    df$company <- folder
-  }
-  
+ 
   ###
   
   
@@ -116,73 +105,54 @@ function that aggregates by day and language and takes the means of likes,
 retweets and tweet_length --> will be used for plotting time series of
 the means according to several filters
 '
-sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filter, file){
+sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filter, file, company_name = NA){
   time_sum <- Sys.time()
-  if (file == "Companies_all.csv"){
-    dt <- df_all[retweets_count >= retweets_filter &
-                   likes_count >= likes_filter &
-                   tweet_length >= length_filter,
-                 .(.N,
-                   mean_rt = mean(retweets_count),
-                   mean_likes = mean(likes_count),
-                   mean_length = mean(tweet_length),
-                   median_rt = median(retweets_count),
-                   median_likes = median(likes_count),
-                   median_length = median(tweet_length),
-                   
-                   std_rt = sd(retweets_count),
-                   std_likes = sd(likes_count),
-                   std_length = sd(tweet_length)), by = c("company", "date", "language")]
-    
-    # remove NAs
-    #dt[,!c("date", "language", "company")] <- setnafill(dt[,!c("date", "language")], fill=0)
-    
-    dt$company <- file
-    
-    
-    
-  } else {
-    dt <- df_all[retweets_count >= retweets_filter &
-                   likes_count >= likes_filter &
-                   tweet_length >= length_filter,
-                 .(.N,
-                   mean_rt = mean(retweets_count),
-                   mean_likes = mean(likes_count),
-                   mean_length = mean(tweet_length),
-                   
-                   mean_sentiment = mean(sentiment),
-                   mean_sentiment_rt = mean(sentiment_rt),
-                   mean_sentiment_likes = mean(sentiment_likes),
-                   mean_sentiment_tweet_length = mean(sentiment_length),
+  
+  dt <- df_all[retweets_count >= retweets_filter &
+                 likes_count >= likes_filter &
+                 tweet_length >= length_filter,
+               .(.N,
+                 mean_rt = mean(retweets_count),
+                 mean_likes = mean(likes_count),
+                 mean_length = mean(tweet_length),
+                 
+                 mean_sentiment = mean(sentiment),
+                 mean_sentiment_rt = mean(sentiment_rt),
+                 mean_sentiment_likes = mean(sentiment_likes),
+                 mean_sentiment_tweet_length = mean(sentiment_length),
 
-                   
-                   median_rt = as.numeric(median(retweets_count)),
-                   median_likes = as.numeric(median(likes_count)),
-                   median_length = as.numeric(median(tweet_length)),
+                 
+                 median_rt = as.numeric(median(retweets_count)),
+                 median_likes = as.numeric(median(likes_count)),
+                 median_length = as.numeric(median(tweet_length)),
 
-                   median_sentiment = as.numeric(median(sentiment)),
-                   median_sentiment_rt = as.numeric(median(sentiment_rt)),
-                   median_sentiment_likes = as.numeric(median(sentiment_likes)),
-                   median_sentiment_tweet_length = as.numeric(median(sentiment_length)),
+                 median_sentiment = as.numeric(median(sentiment)),
+                 median_sentiment_rt = as.numeric(median(sentiment_rt)),
+                 median_sentiment_likes = as.numeric(median(sentiment_likes)),
+                 median_sentiment_tweet_length = as.numeric(median(sentiment_length)),
 
-                   std_rt = sd(retweets_count),
-                   std_likes = sd(likes_count),
-                   std_length = sd(tweet_length),
-                   
-                   
-                   std_sentiment = sd(sentiment),
-                   std_sentiment_rt = sd(sentiment_rt),
-                   std_sentiment_likes = sd(sentiment_likes),
-                   std_sentiment_tweet_length = sd(sentiment_length)
-                   ), by = c("created_at", "language")]
+                 std_rt = sd(retweets_count),
+                 std_likes = sd(likes_count),
+                 std_length = sd(tweet_length),
+                 
+                 
+                 std_sentiment = sd(sentiment),
+                 std_sentiment_rt = sd(sentiment_rt),
+                 std_sentiment_likes = sd(sentiment_likes),
+                 std_sentiment_tweet_length = sd(sentiment_length)
+                 ), by = c("created_at", "language")]
     
     
-  } 
   
   
   
+  # if its a file from a company folder add the company name as column
+  if (!is.na(company_name)){
+    dt$company <- company_name
+    } 
   
   
+  # add used filters
   dt$retweets_count <- retweets_filter
   dt$likes_count <- likes_filter
   dt$tweet_length <- length_filter
@@ -194,8 +164,9 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
   
   ##################################################################
   
-  return(dt)
   print(glue("{file} took {Sys.time() - time_sum}"))
+  return(dt)
+  
   
 }
 
@@ -203,44 +174,49 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
 
 
 # function that applies functions to appended df and saves them
-data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, length_filter, file, folder, 
+data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, length_filter, file, folder_dest, 
                                    
                                     filename_sum,
                                     filename_senti, 
                                     filename_senti_rt,
                                     filename_senti_likes,
                                     filename_senti_length,
-                                    lang){
+                                    lang = ""){
   
   
+  # remove duplicates
+  df_all <- unique(df_all, by = "id")
   ##############################################################################  
   # call function that creates histograms for all three grouping variables
   # for retweets
   print("Computing histogram data for rt")
   #browser()
   
-
+  
   # for retweets
   print("Computing histogram data for rt")
   df_bins_rt <- hist_data_creator(df_all,retweets_filter =  retweets_filter,
                                   likes_filter = likes_filter,
                                   length_filter = length_filter,
                                   grouping_variable = "retweets_count",
-                                  file)
+                                  file,
+                                  company_name)
   # for likes
   print("Computing histogram data for likes")
   df_bins_likes <- hist_data_creator(df_all, retweets_filter, likes_filter, 
                                      length_filter, "likes_count",
-                                     file)
+                                     file,company_name)
   # for tweet length
   print("Computing histogram data for lengths")
   df_bins_long <- hist_data_creator(df_all, retweets_filter, likes_filter, 
-                                    length_filter, "tweet_length", file)
+                                    length_filter, "tweet_length", file,
+                                    company_name)
 
   # for sentiment
   print("Computing histogram data for sentiment")
   df_bins_senti <- hist_data_creator(df_all, retweets_filter, likes_filter,
-                                    length_filter, "sentiment_rd", file)
+                                    length_filter, "sentiment_rd", file,
+                                    company_name)
   
   # # for sentiment * rt
   # print("Computing histogram data for lengths")
@@ -265,7 +241,8 @@ data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, lengt
   # call function that computes means by day and language of all variables
   print("Computing sum stats data")
   df_sum_stats <- sum_stats_creator(df_all,retweets_filter, likes_filter,
-                                    length_filter, file)
+                                    length_filter, file,
+                                    company_name)
   ############
   
   
@@ -277,18 +254,18 @@ data_wrangler_and_saver <- function(df_all, retweets_filter, likes_filter, lengt
   print(glue("Saving files for {folder}, rt: {retweets_filter}, likes: {likes_filter}, length:{length_filter}"))
   
   ##### non sentiment files
-  vroom_write(df_bins_rt, file.path("plot_data", folder ,filename_rt),
+  vroom_write(df_bins_rt, file.path("plot_data", folder_dest ,filename_rt),
               delim = ",")
-  vroom_write(df_bins_likes, file.path("plot_data", folder ,filename_likes),
+  vroom_write(df_bins_likes, file.path("plot_data", folder_dest ,filename_likes),
               delim = ",")
-  vroom_write(df_bins_long, file.path("plot_data", folder ,filename_long),
+  vroom_write(df_bins_long, file.path("plot_data", folder_dest ,filename_long),
               delim = ",")
-  vroom_write(df_sum_stats, file.path("plot_data", folder ,filename_sum),
+  vroom_write(df_sum_stats, file.path("plot_data", folder_dest ,filename_sum),
               delim = ",")
   
   
   # sentiment files
-  vroom_write(df_bins_senti, file.path("plot_data", folder ,filename_senti),
+  vroom_write(df_bins_senti, file.path("plot_data", folder_dest ,filename_senti),
               delim = ",")
   # vroom_write(df_bins_senti_rt, file.path("plot_data", folder ,filename_senti_rt),
   #             delim = ",")
@@ -405,10 +382,14 @@ long_list <- c(0,81)
 
 
 source <- "sentiment/Shiny_files"
-files <- c("all_tweets_sentiment.csv", "all_tweets_sentiment_de_no_dups.csv")
-#files <- list.files(source)[grepl(".csv",source)]
+files_nofilter <- c("all_tweets_sentiment.csv", "all_tweets_sentiment_de_no_dups.csv")
 
-files <- files[1]
+
+
+source <- "sentiment/Shiny_files_companies/appended_files"
+files_companies <- list.files(source)
+
+file <- files_companies[1]
   
 
     
@@ -418,7 +399,7 @@ files <- files[1]
 
 
 
-for (file in files){ 
+for (file in files_company){ 
   
   
   # read all dfs (one per day)
@@ -426,10 +407,11 @@ for (file in files){
   print("Loading Data")
   if (grepl("Companies", file)){
     
-    dt <- fread(file.path(source ,file),
-                select = c("company", "created_at", "language", "retweets_count", 
-                           "likes_count", "tweet_length"),
-                colClasses = c("date" = "character"))
+    df <- data.table::fread(file.path(source ,file),
+                select = c("id", "created_at", "language", "retweets_count", 
+                           "likes_count", "tweet_length", "sentiment"),
+                colClasses = c("created_at" = "character",
+                               "id" = "character"))
     
     
     
@@ -451,9 +433,10 @@ for (file in files){
     
     
     df <- fread(file.path(source ,file),
-                select = c("created_at", "language", "retweets_count", 
+                select = c("id", "created_at", "language", "retweets_count", 
                            "likes_count", "tweet_length", "sentiment"),
-               # colClasses = c("created_at" = "character")
+                colClasses = c("created_at" = "character",
+                               "id" = "character")
                ) 
     df$created_at <- as.Date(df$created_at, "%Y-%m-%d")
     # 
@@ -495,10 +478,16 @@ for (file in files){
           
           if (grepl("de", file)){
             folder <- "De_NoFilter"
+            folder_dest <- "De_NoFilter"
             lang <- "de"
-          } else{
+          } else if (grepl("all", file)){
             folder <- "En_NoFilter"
+            folder_dest <- "En_NoFilter"
             lang <- "en"
+          } else{
+            folder <- stringr::str_split(file, "[.]")[[1]][1]
+            folder_dest <- "Companies"
+            lang <- "companies"
           }
           # non senti files names
           filename_rt <- glue("histo_rt_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
@@ -516,12 +505,12 @@ for (file in files){
           
           # check if any of the files already exists
           if (!(
-                file.exists(file.path("plot_data", folder, filename_sum)) |
+                file.exists(file.path("plot_data", folder_dest, filename_sum)) |
                 
-                file.exists(file.path("plot_data", folder, filename_senti))  
-                # file.exists(file.path("plot_data", folder, filename_senti_rt)) |
-                # file.exists(file.path("plot_data", folder, filename_senti_likes)) |
-                # file.exists(file.path("plot_data", folder, filename_senti_length))
+                file.exists(file.path("plot_data", folder_dest, filename_senti))  |
+                file.exists(file.path("plot_data", folder_dest, filename_rt)) |
+                file.exists(file.path("plot_data", folder_dest, filename_likes)) |
+                file.exists(file.path("plot_data", folder_dest, filename_long))
           )) {
             
             
