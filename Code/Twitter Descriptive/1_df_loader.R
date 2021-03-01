@@ -1,5 +1,5 @@
-df <- vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/De_NoFilter/De_NoFilter_2018-11-30.csv",
-            col_types = cols(.default = "c",
+df <- vroom::vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/De_NoFilter/De_NoFilter_2019-03-10.csv",
+            col_types = readr::cols(.default = "c",
               created_at = "c",
               retweets_count = "i",
               likes_count = "i", tweet_length = "i",
@@ -12,9 +12,9 @@ df <- df %>% rename(date_variable = date,
 
 
 
-df_abc <- vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/appended/En_NoFilter_all.csv",
-            col_types = cols(.default = "c",
-                             created_at = "c",
+df_abc <- vroom::vroom("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/cleaned/appended/En_NoFilter/En_NoFilter_101_200_lessCols.csv",
+            col_types = readr::cols(.default = "c",
+                             date = "c",
                              retweets_count = "i",
                              likes_count = "i", tweet_length = "i",
                              language = "c"), delim = ",")
@@ -42,3 +42,10 @@ a <- subset(df, select = c(date, doc_id, text, retweets_count, language, likes_c
 
 
 term_freq_test <- read_csv("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/term_freq/En_NoFilter/term_freq_En_NoFilter_2018-12-01_rt_50_li_0_lo_all.csv")
+
+
+library(tidyverse)
+
+a <- df_abc %>%
+  group_by(date) %>%
+  summarise(n = n())
