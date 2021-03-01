@@ -55,22 +55,23 @@ DBI::dbDisconnect(con)
 
 
 
-
-setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases")
-con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
+old_wd <- getwd()
+setwd("C:/Users/lukas/OneDrive - UT Cloud/Data")
+con <- DBI::dbConnect(RSQLite::SQLite(), "SQLiteStudio/databases/test.db")
 time1 <- Sys.time()
-df_need <- DBI::dbGetQuery(con, "SELECT retweets_count FROM cleaned_en WHERE date > '2018-11-30' and date < '2021-02-11'")
+df_need <- DBI::dbGetQuery(con, "SELECT * FROM sum_stats_de_all WHERE created_at > '2018-11-30' and created_at < '2021-02-11'")
 print(Sys.time() -  time1)
 
 df_need %>%
   ggplot() +
   geom_histogram(aes(retweets_count))
 Sys.time() - time1
-
+setwd(old_wd)
 
 
 ####################### upload data
 ## test uploading to sql
+old_wd <- getwd()
 setwd("C:/Users/lukas/Documents/SQLiteStudio/databases")
 con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
 
@@ -81,4 +82,22 @@ RSQLite::dbWriteTable(
   overwrite = T)
 
 DBI::dbDisconnect(con)
+setwd(old_wd)
 
+
+
+
+
+old_wd <- getwd()
+setwd("C:/Users/lukas/OneDrive - UT Cloud/Data")
+con <- DBI::dbConnect(RSQLite::SQLite(), "SQLiteStudio/databases/test.db")
+time1 <- Sys.time()
+df_need <- DBI::dbGetQuery(con, "select avg(retweets_count), date from cleaned_en where date >= '2018-11-30' and date <= '2021-01-10'
+group by date")
+print(Sys.time() -  time1)
+
+df_need %>%
+  ggplot() +
+  geom_histogram(aes(retweets_count))
+Sys.time() - time1
+setwd(old_wd)
