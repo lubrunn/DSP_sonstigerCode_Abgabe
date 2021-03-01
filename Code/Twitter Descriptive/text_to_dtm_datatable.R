@@ -1,10 +1,10 @@
-library(corpus)
+#library(corpus)
 library(dplyr)
-library(tm)
+#library(tm)
 library(glue)
-library(vroom)
 library(tidyr)
 library(data.table)
+library(tidytext)
 
 #################################################################################
 #################################################################################
