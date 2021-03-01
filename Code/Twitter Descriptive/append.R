@@ -58,6 +58,9 @@ appender <- function(files, source, dest, folder, companies = F, filename = NA){
     
     df <- df %>% tidyr::drop_na("text")
     
+    # drop duplicates
+    df <- df[!duplicated(df$doc_id),]
+    
     # for company folder add the company name as column in order to be later able to filter for company names
     # for Johnson & Johnson change name
     if (companies == T){
@@ -66,16 +69,16 @@ appender <- function(files, source, dest, folder, companies = F, filename = NA){
       } else {
         # replace umlaute
         company_name <- stringi::stri_replace_all_fixed(
-          folder, 
+          company_folder, 
           c("ä", "ö", "ü", "Ä", "Ö", "Ü"), 
           c("ae", "oe", "ue", "Ae", "Oe", "Ue"), 
           vectorize_all = FALSE
         )
         df$company <- company_name
-        df %>% select(doc_id, company, date, text, retweets_count, likes_count, tweet_length, language)
+        df <- df %>% select(doc_id, company, date, text, retweets_count, likes_count, tweet_length, language, user_id, username)
       }
     } else{
-      df %>% select(doc_id, date, text, retweets_count, likes_count, tweet_length, language)
+      df <- df %>% select(doc_id, date, text, retweets_count, likes_count, tweet_length, language, user_id, username)
     }
     
     print("Merging files")
@@ -92,13 +95,25 @@ appender <- function(files, source, dest, folder, companies = F, filename = NA){
   
   print("Saving files")
   # save entire big csv
-  if (!is.na(filename)){
-    file_path <- file.path(dest, filename)
-  } else {
-    file_path <- file.path(dest, glue("{folder}_all.csv"))
-    
-  }
-  vroom_write(df_all, file_path, delim = ",")
+  
+  vroom_write(df_all, dest, delim = ",")
+  
+  
+  ### upload to sql
+  old_wd <- getwd()
+  setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases")
+  con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
+  
+  # write data to sql for rt histo
+  RSQLite::dbWriteTable(
+    con,
+    "companies",
+    df_all,
+    append = T
+  )
+  
+  DBI::dbDisconnect(con)
+  setwd(old_wd)
   
   print(Sys.time() - time1)  
 }
@@ -164,26 +179,35 @@ append_all <- function(source_main, folders){
         # path to individual company folder
         source <- file.path(source_main, folder, company_folder)
         # same as source just created for clarity (only string no long comp time)
-        dest <- file.path(source_main, "appended/Companies")
+        dest_main <- file.path(source_main, "appended/Companies")
         
         # list all files in indivdual company folder
         files <- list.files(source)
         
+        
+        
+          
+        
+        dest <- file.path(dest_main, glue("{company_folder}_all.csv"))
+          
+        if (!file.exists(dest)){
+        
         # append each file togehter and save the appended file in the destination
         appender(files, source, dest, folder = company_folder, companies = T)
+        }
       }
       
       # then take each appended company df containing all 
       # days and append all company df to one big company df containing all 
       # days for all companies
       
-      print("Now appending all individually appended company files")
-      files <- list.files(dest)
-      # select new destination
-      dest <- file.path(source_main, "appended")
-      # append all single files
-      appender(files, source = dest, dest = dest, folder = "Companies",
-               companies = F)
+      # print("Now appending all individually appended company files")
+      # files <- list.files(dest)
+      # # select new destination
+      # dest <- file.path(source_main, "appended")
+      # # append all single files
+      # appender(files, source = dest, dest = dest, folder = "Companies",
+      #          companies = F)
       
       
       
@@ -200,10 +224,10 @@ append_all <- function(source_main, folders){
       # path to en_nofilter/de_nofilter
       source <- file.path(source_main, folder)
       # destination
-      dest <- file.path(source_main, "appended")
+      dest_main <- file.path(source_main, "appended")
       
       # list all files in the source
-      
+      dest <- file.path(dest_main, filename)
       # split append process into 4 subprocesses so in case of error/stuck
       # not all progress lost
       subset_list <- c(0, 100, 200, 300, 400, 500,600, 700, 813)
@@ -241,42 +265,54 @@ append_all <- function(source_main, folders){
 Function that appends sub appended lists
 '
 
-final_appender <- function(source_main, dest, lang){
-  source <- file.path(source_main, dest)
-  files <- list.files(source)
-  
-  files <- files[grepl(glue("^{lang}.*\\.csv"), files)]
-  df_list <- list()
-  i <- 0
-  for (file in files){
-  
-    
-    
-  file <- files[8]
-  df <- vroom(file.path(source,file),
-              col_types = cols_only(doc_id = "c",text = "c",
-                                    user_id = "c",
-                                    username = "c",
-                               date = "c",
-                               retweets_count = "i",
-                               language = "c",
-                               likes_count = "i", tweet_length = "i"),
-              delim = ",")
-  
-  i = i + 1
-  df_list[[i]] <- df
-  
-  }
-  df_all = data.table::rbindlist(df_list)
-  
-  
-  
-  
-  
-  
-  filename <- file.path(source_main, dest, glue("{lang}_NoFilter_all.csv"))
-  vroom_write(df, filename, delim = ",")
-}
+# final_appender <- function(source_main, dest, lang){
+#   source <- file.path(source_main, dest)
+#   files <- list.files(source)
+#   
+#   files <- files[grepl(glue("^{lang}.*\\.csv"), files)]
+#   df_list <- list()
+#   i <- 0
+#   for (file in files){
+#   
+#     
+#     
+#   file <- files[8]
+#   df <- vroom(file.path(source,file),
+#               col_types = cols_only(doc_id = "c",text = "c",
+#                                     user_id = "c",
+#                                     username = "c",
+#                                date = "c",
+#                                retweets_count = "i",
+#                                language = "c",
+#                                likes_count = "i", tweet_length = "i"),
+#               delim = ",")
+#   
+#   i = i + 1
+#   df_list[[i]] <- df
+#   
+#   }
+#   df_all = data.table::rbindlist(df_list)
+#   
+#   
+#   
+#   
+#   
+#   
+#   filename <- file.path(source_main, dest, glue("{lang}_NoFilter_all.csv"))
+#   vroom_write(df, filename, delim = ",")
+# }
+# 
+# 
+
+
+#final_appender(source_main,dest = "appended", "En")
+
+
+
+
+
+
+
 
 
 # which folders should be appended
@@ -285,18 +321,13 @@ source_main <- "cleaned"
 # list all folders in source main
 folders <- list.files(source_main)
 
-folders <- folders[4]
+folders <- "Companies2"
 
 # start function
 append_all(source_main, folders)
 
 
 
-dest <- "appended"
-lang = "En"
-
-
-#final_appender(source_main,dest = "appended", "En")
 
 
 
