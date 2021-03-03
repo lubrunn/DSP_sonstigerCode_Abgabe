@@ -85,7 +85,7 @@ emoji_words <- emoji_words <- c(
   "retweet",
   "year",
   "ago",
-  "scoial media",
+  "social media",
   "woman",
   "voltag",
   "star",
@@ -348,8 +348,8 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
     for (file in files){
       
       if (grepl("NoFilter", folder)){
-        df <- read_csv(file.path(source_main,folder, file),
-                           col_types = cols_only(doc_id = "c",text = "c",
+        df <- readr::read_csv(file.path(source_main,folder, file),
+                           col_types = readr::cols_only(doc_id = "c",text = "c",
                                                  created_at = "c",
                                                  retweets_count = "i",
                                                  likes_count = "i", tweet_length = "i",
@@ -363,17 +363,17 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
         df <- df %>% rename(date_variable = date, 
                             language_variable = language)
         
-      } else if(folder == "Companies"){
+      } else if(grepl("Companies", folder)){
         
-        df <- read_csv(file.path(source_main,folder, file),
-                           col_types = cols_only(doc_id = "c",text = "c",
+        df <- readr::read_csv(file.path(source_main,folder, file),
+                           col_types = readr::cols_only(doc_id = "c",text = "c",
                                                  company = "c",
-                                                 created_at = "c",
+                                                 date = "c",
                                                  retweets_count = "i",
                                                  likes_count = "i", tweet_length = "i",
-                                                 language = "c")) 
+                                                 language = "c"))
         
-        df$date <- as.Date(df$created_at, "%Y-%m-%d")
+        df$date <- as.Date(df$date, "%Y-%m-%d")
         
         
         print("Loaded data, renaming variables")
@@ -414,16 +414,16 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
               
               print(glue("Working on {file} for retweets: {retweets_filter}, likes: {likes_filter}, long:{length_filter}"))
               # check if file already exists at destination, otherwise compute it
-              if (file.exists(file.path(dest,glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")))){
+              if (!file.exists(file.path(dest,"uni",glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")))){
                 time1 <- Sys.time()
-                term_freq_computer(source = source_main, 
+                term_freq_computer(df, 
                                    file = file, 
                                    dest = dest,
-                                   retweets_filter = retweets_filter,
-                                   likes_filter = likes_filter,
-                                   length_filter = length_filter,
-                                   filname_old = filename_old,
-                                   long_name = long_name)
+                                   filename_old = filename_old,
+                                   retweets_filter,
+                                   likes_filter,
+                                   length_filter,
+                                   long_name)
                 print(Sys.time() - time1)
                 
               } else{
@@ -504,7 +504,7 @@ retweets_list <- c(0, 10, 50, 100, 200)
 long_list <- c(0,81)
 
 source_main_NoFilter <- "cleaned"
-spurce_main_comp <- "cleaned/appended"
+source_main_comp <- "cleaned/appended"
 folders_NoFilter <- c("En_NoFilter", "De_NoFilter")
 folders_comp <- "Companies"
 
@@ -516,7 +516,7 @@ folders_comp <- "Companies"
 ################################################################################
 ################################ Call function #################################
 # For NoFilter
-compute_all_freq(source_main = source_main_NoFilter, folders = folders_NoFilter[1], 
+compute_all_freq(source_main = source_main_comp, folders = folders_comp, 
                  retweets_list, likes_list, long_list)
 
 
