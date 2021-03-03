@@ -49,3 +49,18 @@ library(tidyverse)
 a <- df_abc %>%
   group_by(date) %>%
   summarise(n = n())
+
+
+
+
+
+##### load sentiment files
+
+
+
+df <- data.table::fread("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter/sentiment/Shiny_files/raw_sentiment/En_NoFilter_2019-01-01.csv",
+                        select = c("id", "created_at", "language", "retweets_count", 
+                                   "likes_count", "tweet_length", "sentiment"),
+                        colClasses = c("created_at" = "character",
+                                       "id" = "character"))
+
