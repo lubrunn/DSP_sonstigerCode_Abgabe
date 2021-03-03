@@ -65,18 +65,19 @@ appender <- function(files, source, dest, folder, companies = F, filename = NA){
     # for Johnson & Johnson change name
     if (companies == T){
       if (folder == "JohnsonJohnson"){
-        df$company <- "Johnson & Johnson"
+        df$company <- "Johnson Johnson"
       } else {
         # replace umlaute
         company_name <- stringi::stri_replace_all_fixed(
-          company_folder, 
+          folder, 
           c("ä", "ö", "ü", "Ä", "Ö", "Ü"), 
           c("ae", "oe", "ue", "Ae", "Oe", "Ue"), 
           vectorize_all = FALSE
         )
         df$company <- company_name
-        df <- df %>% select(doc_id, company, date, text, retweets_count, likes_count, tweet_length, language, user_id, username)
       }
+        df <- df %>% select(doc_id, company, date, text, retweets_count, likes_count, tweet_length, language, user_id, username)
+      
     } else{
       df <- df %>% select(doc_id, date, text, retweets_count, likes_count, tweet_length, language, user_id, username)
     }
