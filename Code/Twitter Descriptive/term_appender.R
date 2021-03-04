@@ -24,7 +24,7 @@ if (vpc == T) {
 source_main <- "term_freq"
 
 folders_main <- c("En_NoFilter", "De_NoFilter")
-folders_main <- folders_main[1]
+folders_main <- folders_main[2]
 
 
 likes_list <- c(0, 10, 50, 100, 200)
@@ -35,7 +35,7 @@ long_list <- c(0,81)
 for (folder in folders_main){
   folders_sub <- list.files(file.path(source_main, folder))
   
-  for (subfolder in folders_sub[!grepl("appended", folders_sub)]){
+  for (subfolder in folders_sub[!grepl("appended", folders_sub)][2]){
     
     # list all files
     files <- list.files(file.path(source_main, folder, subfolder))
@@ -66,8 +66,10 @@ for (folder in folders_main){
           # read all files and append
           df_all <- NULL
           for (selected_file in selected_files){
-            df <- data.table::fread(file.path(source_main, folder, subfolder, selected_file), sep = ",") %>%
+            print(glue("Loading {selected_file}"))
+            df <- data.table::fread(file.path(source_main, folder, subfolder, selected_file)) %>%
               rename(date = date_variable, language = language_variable)
+            Sys.sleep(0.1)
             if (is.null(df_all)){
               df_all <- df
             } else {
@@ -77,7 +79,7 @@ for (folder in folders_main){
           
           
           print(glue("Saving {new_filename}"))
-          vroom_write(df_all, dest, delim =",")
+          fwrite(df_all, dest)
           print(Sys.time() - time1)
         
         
