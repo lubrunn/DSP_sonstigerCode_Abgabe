@@ -1,5 +1,6 @@
-
+library(glue)
 library(tidytext)
+library(tidyverse)
 setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/Twitter")
 
 # read data
@@ -37,7 +38,7 @@ con here:
   
 '
   # approximate threshold
-  threshold <- as.integer(0.001 * dim(df)[1])
+  threshold_pairs <- as.integer(0.001 * dim(df)[1]) + 5 #at least 5
   # put every single word into new column, so one row per word in tweet
   network_df <- df %>%
     unnest_tokens(word, text) %>%
@@ -46,7 +47,7 @@ con here:
   # feel so forgoten that --> feel so, feel forgotten, feel that, so feel, so forgotten, so that etc.
   widyr::pairwise_count(word, doc_id, sort = T) %>%
   rename("weight" = n) %>%
-  filter(weight > threshold)
+  filter(weight > 80)
  
   
   #remove rows that are the same but item1 and item2 are reversed
@@ -66,7 +67,7 @@ con here:
   #################### part from loop, takes too long --> taken out of analysis
   pairs_df <- df %>%
     unnest_tokens(word, text) %>%
-    group_by(date_variable, language_variable) %>%
+    #group_by(date_variable, language_variable) %>%
     # show all pairs out of all pairs per tweet
     # feel so forgoten that --> feel so, feel forgotten, feel that, so feel, so forgotten, so that etc.
     widyr::pairwise_count(word, doc_id, sort = T) %>%
@@ -78,7 +79,7 @@ con here:
   pairs_df <- pairs_df[!duplicated(t(apply(pairs_df,1,sort))),]
   
   # collapse both words
-  pairs_df$pairs <- paste(pairs_df$item1,pairs_df$item2, sep = ", ")
+  pairs_df$pairs <- paste(pairs_df$item1,pairs_df$item2, sep = " ")
   pairs_df <-  pairs_df %>% select(pairs, n = weight) %>%
     pivot_wider(names_from = pairs, values_from = n) %>%
     ungroup %>%
@@ -87,3 +88,25 @@ con here:
            likes_count = likes_filter,
            tweet_length = length_filter) 
 
+
+  
+  ## compare with bigram
+  df2 <- df  %>%
+    
+    tidytext::unnest_tokens(word, text, token = "ngrams", n = 3) 
+  data.table::setDT(df2)
+  # aggregate
+  df2 <- df2[,.(.N), by = c("word")]
+  # filter
+  df2 <- df2[N > 20 & !is.na(word) &
+               nchar(word) > 2,]
+  df2[, emo := grepl(paste(emoji_words, collapse = "|"), word)]
+  
+  df2 <- df2 %>% filter(emo ==F)
+  
+  
+  data.table::setDT(pairs_df)
+  pairs_df[, emo := grepl(paste(emoji_words, collapse = "|"), pairs)]
+  pairs_df <- pairs_df %>% filter(emo == F)
+  
+  
