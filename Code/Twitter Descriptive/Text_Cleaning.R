@@ -390,7 +390,7 @@ df_cleaner_german <- function(df){
 folders <- list.files(path_source)
 
 # select subset of folder
-folders <- c("De_NoFilter")
+
 
 
 # go thru all main folders 
@@ -435,7 +435,7 @@ for (folder in folders){
     
   } else if (folder == "Companies2"){
     # for all company folders go one level deeper
-    subfolders <- list.files(file.path(path_source, folder))[40:60]
+    subfolders <- list.files(file.path(path_source, folder))
     
     for (subfolder in subfolders){
       

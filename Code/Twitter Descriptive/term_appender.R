@@ -1,7 +1,7 @@
 
 library(vroom)
 library(glue)
-
+library(tidyverse)
 
 
 
@@ -23,7 +23,8 @@ if (vpc == T) {
 
 source_main <- "term_freq"
 
-folders_main <- list.files(source_main)[!grepl("appended", list.files(source_main))]
+folders_main <- c("En_NoFilter", "De_NoFilter")
+folders_main <- folders_main[2]
 
 
 likes_list <- c(0, 10, 50, 100, 200)
@@ -34,7 +35,7 @@ long_list <- c(0,81)
 for (folder in folders_main){
   folders_sub <- list.files(file.path(source_main, folder))
   
-  for (subfolder in folders_sub[!grepl("appended", folders_sub)])
+  for (subfolder in folders_sub[!grepl("appended", folders_sub)][2]){
     
     # list all files
     files <- list.files(file.path(source_main, folder, subfolder))
@@ -53,14 +54,41 @@ for (folder in folders_main){
         # check all files that have this addon
         selected_files <-  files[grepl(add_on, files)] 
         
-        # read all files and append
-        df <- vroom:vroom(file.path(source_main, folder, subfolder, selected_files))
-        
+        # create new file name
         new_filename <- glue("{subfolder}_{folder}_{add_on}.csv")
-        dest <- file.path(source_main,folder, glue("{subfolder}_appended", ))
+        # destination
+        dest <- file.path(source_main,folder, glue("{subfolder}_appended"),new_filename )
         
-        vroom_write(df, dest, delim =",")
+        # check if filename alreday exists at destination
+        if(!file.exists(dest)){
+          print(glue("Working on {new_filename}"))
+          time1 <- Sys.time()
+          # read all files and append
+          df_all <- NULL
+          for (selected_file in selected_files){
+            print(glue("Loading {selected_file}"))
+            df <- data.table::fread(file.path(source_main, folder, subfolder, selected_file)) %>%
+              rename(date = date_variable, language = language_variable)
+            Sys.sleep(0.1)
+            if (is.null(df_all)){
+              df_all <- df
+            } else {
+              df_all <- bind_rows(df_all,df)
+            }
+          }
+          
+          
+          print(glue("Saving {new_filename}"))
+          fwrite(df_all, dest)
+          print(Sys.time() - time1)
         
+        
+        } else{ # if clause
+        print(glue("{new_filename} already exists"))
+          }
+        
+        
+      }
         
       }
     }

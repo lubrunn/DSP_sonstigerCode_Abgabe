@@ -260,7 +260,7 @@ data_wrangler_and_saver <- function(df_all,
   df_bins_long <- hist_data_creator(df_all, retweets_filter, likes_filter,
                                     length_filter, "tweet_length", file,
                                     company_name)
-
+  
   # for sentiment
   print("Computing histogram data for sentiment")
   df_bins_senti <- hist_data_creator(df_all, retweets_filter, likes_filter,
@@ -399,7 +399,7 @@ data_wrangler_and_saver <- function(df_all,
   #    df_bins_senti_length,
   #    append = T
   # )
-
+  
   
   DBI::dbDisconnect(con)
   setwd(old_wd)
@@ -458,37 +458,7 @@ for (file in files_companies){
   time1 <- Sys.time()
   print("Loading Data")
   
-  if (grepl("all", file)){
-    
-    
-    df <- fread(file.path(source ,file),
-                select = c("id", "created_at", "language", "retweets_count", 
-                           "likes_count", "tweet_length", "sentiment"),
-                colClasses = c("created_at" = "character",
-                               "id" = "character")
-    ) 
-    df$created_at <- as.Date(df$created_at, "%Y-%m-%d")
-    # 
-    # k <- "0"
-    # 
-    # df <- df[created_at <= "2019-12-31"]
-    
-    
-    
-    #df$created_at <- as.character(df$created_at)
-    
-    # coompute new variables dependent on sentiment
-    df$sentiment_rt <- df$sentiment * df$retweets_count
-    df$sentiment_likes <- df$sentiment * df$likes_count
-    df$sentiment_length <- df$sentiment * df$tweet_length
-    
-    # create rounded sentiment variables for bincounts
-    df$sentiment_rd <- round(df$sentiment, 2)
-    df$sentiment_rt_rd <- round(df$sentiment_rt)
-    df$sentiment_likes_rd <- round(df$sentiment_likes)
-    df$sentiment_length_rd <- round(df$sentiment_length)
-    
-  } else  {
+  
     
     df <- data.table::fread(file.path(source ,file),
                             select = c("id", "created_at", "language", "retweets_count", 
@@ -512,125 +482,91 @@ for (file in files_companies){
     
     
     
-  }
-    
-    for (retweets_filter in retweets_list){
-      for(likes_filter in likes_list){
-        for(length_filter in long_list){
-          
-          # check which name to five file
-          if (length_filter == 81){
-            long_name <- "long_only"
-          } else{
-            long_name <- "all"
-          }
-          
-          
-          print(glue("Working on {file}, rt: {retweets_filter}, likes: {likes_filter}, length: {length_filter}"))
-          
-          
-          if (grepl("de", file)){
-            folder <- "De_NoFilter"
-            folder_dest <- "De_NoFilter"
-            lang <- "de"
-          } else if (grepl("all", file)){
-            folder <- "En_NoFilter"
-            folder_dest <- "En_NoFilter"
-            lang <- "en"
-          } else{
-            folder <- stringr::str_split(file, "[.]")[[1]][1]
-            folder_dest <- "Companies"
-            lang <- "companies"
-          }
-          # non senti files names
-          filename_rt <- glue("histo_rt_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          filename_likes <- glue("histo_likes_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          filename_long <- glue("histo_long_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          
-          filename_sum <- glue("sum_stats_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          
-          # senti filesnames
-          filename_senti <- glue("histo_senti_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          filename_senti_rt <- glue("histo_senti_rt_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          filename_senti_likes <- glue("histo_senti_likes_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          filename_senti_length <- glue("histo_senti_long_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
-          
-          
-          # check if any of the files already exists
-          if (!(
-            file.exists(file.path("plot_data", folder_dest, filename_sum)) 
-            
-            #file.exists(file.path("plot_data", folder_dest, filename_senti))  |
-            # file.exists(file.path("plot_data", folder_dest, filename_rt)) |
-            # file.exists(file.path("plot_data", folder_dest, filename_likes)) |
-            # file.exists(file.path("plot_data", folder_dest, filename_long))
-          )) {
-            
-            
-            
-            # folder <- gsub("\\..*","",file)
-            
-            print("Starting to wrangle.")
-            # call function that wrangles df and saves it
-            if (grepl("NoFilter", folder)) {
-          
-              
-              
-              
-              data_wrangler_and_saver(df_all = df, 
-                                               retweets_filter, 
-                                               likes_filter, 
-                                               length_filter, 
-                                               file, 
-                                               folder_dest, 
-                                               
-                                               filename_rt,
-                                               filename_likes,
-                                               filename_length,
-                                               
-                                               
-                                               filename_sum,
-                                               
-                                               filename_senti, 
-                                               filename_senti_rt, 
-                                               filename_senti_likes,
-                                               filename_senti_length,
-                                               lang,
-                                               company_name = NA)
-              
-              
-              
-              
-            } else{
-              data_wrangler_and_saver(df_all = df, 
-                                      retweets_filter, 
-                                      likes_filter, 
-                                      length_filter, 
-                                      file, 
-                                      folder_dest, 
-                                      
-                                      filename_rt,
-                                      filename_likes,
-                                      filename_length,
-                                      
-                                      
-                                      filename_sum,
-                                      
-                                      filename_senti, 
-                                      filename_senti_rt, 
-                                      filename_senti_likes,
-                                      filename_senti_length,
-                                      lang,
-                                      company_name =folder )
-            }
-            print(Sys.time() - time1)
-          } else {print(glue("All files for {file} already exist at destination plot_data/{folder}"))}
+  
+  
+  for (retweets_filter in retweets_list){
+    for(likes_filter in likes_list){
+      for(length_filter in long_list){
+        
+        # check which name to five file
+        if (length_filter == 81){
+          long_name <- "long_only"
+        } else{
+          long_name <- "all"
+        }
+        
+        
+        print(glue("Working on {file}, rt: {retweets_filter}, likes: {likes_filter}, length: {length_filter}"))
+        
+        
+      
+        folder <- stringr::str_split(file, "[.]")[[1]][1]
+        folder_dest <- file.path("Companies",folder)
+        lang <- "companies"
+        
+        # non senti files names
+        filename_rt <- glue("histo_rt_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        filename_likes <- glue("histo_likes_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        filename_long <- glue("histo_long_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        
+        filename_sum <- glue("sum_stats_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        
+        # senti filesnames
+        filename_senti <- glue("histo_senti_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        filename_senti_rt <- glue("histo_senti_rt_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        filename_senti_likes <- glue("histo_senti_likes_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        filename_senti_length <- glue("histo_senti_long_{folder}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")
+        
+        # create destination directory
+        dir.create(file.path("plot_data", folder_dest))
+        
+        # check if any of the files already exists
+        if (!(
+          file.exists(file.path("plot_data", folder_dest, filename_sum)) |
           
           
-        } 
-      }
+          file.exists(file.path("plot_data", folder_dest, filename_senti))  |
+          file.exists(file.path("plot_data", folder_dest, filename_rt)) |
+          file.exists(file.path("plot_data", folder_dest, filename_likes)) |
+          file.exists(file.path("plot_data", folder_dest, filename_long))
+        )) {
+          
+          
+          
+          # folder <- gsub("\\..*","",file)
+          
+          print("Starting to wrangle.")
+          # call function that wrangles df and saves it
+         
+            data_wrangler_and_saver(df_all = df, 
+                                    retweets_filter, 
+                                    likes_filter, 
+                                    length_filter, 
+                                    file, 
+                                    folder_dest, 
+                                    
+                                    filename_rt,
+                                    filename_likes,
+                                    filename_length,
+                                    
+                                    
+                                    filename_sum,
+                                    
+                                    filename_senti, 
+                                    filename_senti_rt, 
+                                    filename_senti_likes,
+                                    filename_senti_length,
+                                    lang,
+                                    company_name =folder)
+          
+          print(Sys.time() - time1)
+        } else {print(glue("All files for {file} already exist at destination plot_data/{folder}"))}
+        
+        
+      } 
     }
   }
+}
 
 
 
