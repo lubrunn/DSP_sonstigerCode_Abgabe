@@ -170,7 +170,7 @@ for folder in folders:
 
 
 #%% get dict with all search terms that need to be querried
-folder = folders[0]
+
 search_term_dict = {}
 # scrape missing dates for each folder
 for folder in [k for k in folders if k in company_folders or k in nofilter_folders]:
