@@ -1,6 +1,6 @@
 
 '
-Here we write a function that goes through a main model and appends for each 
+Here we write a function that goes through a main folder and appends for each 
 subfolder the files fo each day into on big csv
 this csv will be used for sql, term_freq calc, histogram calc and maybe more
 '
@@ -100,21 +100,21 @@ appender <- function(files, source, dest, folder, companies = F, filename = NA){
   vroom_write(df_all, dest, delim = ",")
   
   
-  ### upload to sql
-  old_wd <- getwd()
-  setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases")
-  con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
-  
-  # write data to sql for rt histo
-  RSQLite::dbWriteTable(
-    con,
-    "companies",
-    df_all,
-    append = T
-  )
-  
-  DBI::dbDisconnect(con)
-  setwd(old_wd)
+  # ### upload to sql
+  # old_wd <- getwd()
+  # setwd("C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases")
+  # con <- DBI::dbConnect(RSQLite::SQLite(), "test.db")
+  # 
+  # # write data to sql for rt histo
+  # RSQLite::dbWriteTable(
+  #   con,
+  #   "companies",
+  #   df_all,
+  #   append = T
+  # )
+  # 
+  # DBI::dbDisconnect(con)
+  # setwd(old_wd)
   
   print(Sys.time() - time1)  
 }
