@@ -75,7 +75,7 @@ forceNetwork(
 
 
 
-
+df <- head(df, 80000)
 
 
 #########################
@@ -97,7 +97,7 @@ ngram_network_plot <- function(df, n, threshold){
   split_cols <- c()
   for (i in 1:n){
     word <- glue("word{i}")
-    split_cols <- list.append(split_cols, word)
+    split_cols <- rlist::list.append(split_cols, word)
   }
   
   bi.gram.words %<>% 
@@ -166,7 +166,7 @@ ngram_network_plot <- function(df, n, threshold){
 }
 
 
-ngram_network_plot(tweets, n = 2, 10)
+ngram_network_plot(df, n = 2, 50)
 
 
 
