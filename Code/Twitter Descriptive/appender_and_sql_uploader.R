@@ -21,7 +21,7 @@ if (vpc == T) {
 
 source_main <- "plot_data"
 
-folder <- "De_NoFilter"
+folder <- "En_NoFilter"
 
 files <- list.files(file.path(source_main, folder))
 
@@ -39,7 +39,7 @@ con <- DBI::dbConnect(RSQLite::SQLite(), "C:/Users/lukas/OneDrive - UT Cloud/Dat
 # upload
 RSQLite::dbWriteTable(
   con,
-  "sum_stats_de",
+  "sum_stats_en",
   df,
   append = T
 )
