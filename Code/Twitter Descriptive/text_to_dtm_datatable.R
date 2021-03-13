@@ -209,8 +209,8 @@ term_freq_computer <- function(df, file, dest,
   # Sys.time() - time1
   
   # 1 percent of average number of tweets per day
-  threshold_single <- round(0.01 *  mean(num_tweets$tweets_amnt))
-  threshold_pairs <- round(0.001 *  mean(num_tweets$tweets_amnt))
+  threshold_single <- max(round(0.01 *  mean(num_tweets$tweets_amnt)), 1)
+  threshold_pairs <- max(round(0.001 *  mean(num_tweets$tweets_amnt)),1)
   
   
   
@@ -309,9 +309,14 @@ term_freq_computer <- function(df, file, dest,
 
   #filename_new_pairs <- glue("pair_count_{folder}_rt_{retweets}_li_{likes}_lo_{long_name}.csv")
   
+  if (!grepl(filename_old,"NoFilter")){
+    dest_path_single <- file.path(dest,"uni_appended", filename_new_single)
+    dest_path_bi <- file.path(dest,"bi_appended", filename_new_bi)
+  } else {
+    
   dest_path_single <- file.path(dest,"uni", filename_new_single)
   dest_path_bi <- file.path(dest,"bi", filename_new_single)
-
+}
   #dest_path_pairs <- file.path(dest, filename_new_pairs)
   
   
@@ -344,6 +349,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
   for (folder in folders){
     
     files <- list.files(file.path(source_main,folder))
+    
     
     for (file in files){
       
@@ -414,7 +420,7 @@ compute_all_freq <- function(source_main, folders, retweets_list, likes_list, lo
               
               print(glue("Working on {file} for retweets: {retweets_filter}, likes: {likes_filter}, long:{length_filter}"))
               # check if file already exists at destination, otherwise compute it
-              if (!file.exists(file.path(dest,"uni",glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")))){
+              if (!file.exists(file.path(dest,"uni_appended",glue("term_freq_{filename_old}_rt_{retweets_filter}_li_{likes_filter}_lo_{long_name}.csv")))){
                 time1 <- Sys.time()
                 term_freq_computer(df, 
                                    file = file, 
