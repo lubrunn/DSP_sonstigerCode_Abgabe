@@ -57,7 +57,7 @@ def df_cleaner(df, lang = None, lang_controller = False):
 
 source = "raw"
 dest = "coords"
-dest_cleaned = "pre_cleaned"
+
 folders_all = [k for k in os.listdir(source) if "Comp" in k or "Filter" in k]
 
 company_folders = ["Companies_en", "Companies_de"]
@@ -73,13 +73,13 @@ subfolders = [k.split("_")[0] for k in  os.listdir(os.path.join(source, "Compani
 for subfolder in subfolders:
     print(f"Working on {subfolder}")
     new_dest = os.path.join(dest,"Companies", subfolder)
-    new_dest_cleaned = os.path.join(dest_cleaned,"Companies", subfolder)
+    #new_dest_cleaned = os.path.join(dest_cleaned,"Companies", subfolder)
     
     # create folder in new destination if it does not already exist
     if not os.path.exists(new_dest):
         os.mkdir(os.path.join(new_dest))
-    if not os.path.exists(new_dest_cleaned):
-        os.mkdir(os.path.join(new_dest_cleaned))
+    # if not os.path.exists(new_dest_cleaned):
+    #     os.mkdir(os.path.join(new_dest_cleaned))
     
     # now go into each company folder in the source an concat files from same day together
     # for this need to check if files exist in both and control for it
@@ -96,10 +96,10 @@ for subfolder in subfolders:
     
     # now check which dates already exist at dest
     files_dest = os.listdir(os.path.join(dest, "Companies", subfolder))
-    files_dest_cleaned =  os.listdir(os.path.join(dest_cleaned, "Companies", subfolder))
+    #files_dest_cleaned =  os.listdir(os.path.join(dest_cleaned, "Companies", subfolder))
     
     # inner join
-    files_dest_both = list(set(files_dest) & set(files_dest_cleaned))
+    files_dest_both = files_dest
     
     # extract dates
     dates_exist = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files_dest_both]
@@ -261,10 +261,10 @@ for lang in lang_folders:
     
     # check which files already exist
     files_dest = [k for k in os.listdir(os.path.join(dest,folders[0])) if ".csv" in k]
-    files_dest_cleaned = [k for k in os.listdir(os.path.join(dest_cleaned,folders[0])) if ".csv" in k]
+    #files_dest_cleaned = [k for k in os.listdir(os.path.join(dest_cleaned,folders[0])) if ".csv" in k]
     
     # inner join list and find last date that exists in both
-    files_dest_both = list(set(files_dest) & set(files_dest_cleaned))
+    files_dest_both = files_dest
     # convert to datelist
     dates_dest = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files_dest_both]
     
