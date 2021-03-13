@@ -45,7 +45,7 @@ get_Yahoo_update <- function(country) {
   df_index <- read_csv(paste0(glue("{country}"),"/",glue("{country}"),"_Index_Components",".csv"))
   # store symbols in dataframe
   if(country=="Germany"){
-    symbol <- c(df_index$Symbol,"MTX.DU")
+    symbol <- c(df_index$Symbol,"MTX.F")
   }else {
   symbol <- df_index$Symbol
   }
