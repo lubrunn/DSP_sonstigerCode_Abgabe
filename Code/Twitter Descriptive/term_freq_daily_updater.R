@@ -521,6 +521,7 @@ compute_all_freq <- function(source_main, folders,
                 dates_missing <- seq(as.Date(last_update) + lubridate::days(1) , as.Date(last_date_avail), by="days")
               } else {
                 ##### if up to date move on to next loop
+                print("no missing dates found")
                 next 
               }
                                    
