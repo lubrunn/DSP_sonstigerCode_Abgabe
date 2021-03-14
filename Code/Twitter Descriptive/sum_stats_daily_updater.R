@@ -83,6 +83,7 @@ missing_files_finder <- function(source_main, folder_all){
   if (as.Date(last_update) < as.Date(last_date_avail)) {
   dates_missing <- seq(as.Date(last_update) + lubridate::days(1) , as.Date(last_date_avail), by="days")
   } else {
+    print("no missing dates found")
     return(c())
   }
   ### only start process for files that are missing
