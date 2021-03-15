@@ -239,6 +239,13 @@ term_freq_computer <- function(df, file, dest,
   }
   df_list_new <- list(df1 = df1, df2 = df2)
   
+  
+  ### account for fact that in company files rt_count etc. are not in csvs
+  if (!grepl("NoFilter", filename_new_bi)){
+    df1 <- df1 %>% select(date_variable, language_variable, word, N, emo)
+    df2 <- df2 %>% select(date_variable, language_variable, word, N, emo)
+  }
+  browser()
   return(df_list_new)
   
   
@@ -558,7 +565,7 @@ compute_all_freq <- function(source_main, folders,
             dest <- "term_freq/Companies"
             
             subfolders_comp <- list.files(file.path(source_main, folder))
-            subfolders_comp <- "Delivery Hero"
+            #subfolders_comp <- "Delivery Hero"
             
             for (subfolder_comp in subfolders_comp){
               print(glue("Working on {subfolder_comp}"))
