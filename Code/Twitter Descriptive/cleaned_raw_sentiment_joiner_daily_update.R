@@ -51,6 +51,7 @@ dest_main <- "cleaned_raw_sentiment"
 folders_dest <- c("Companies", "En_NoFilter", "De_NoFilter")
 
 for (folder in folders_dest){
+ 
   print(glue("Working on {folder}"))
   
   if (grepl("Companies", folder)){
@@ -100,6 +101,9 @@ for (folder in folders_dest){
       ### get missing files
       ### only start process for files that are missing
       files_missing <- files_all[grepl(paste(dates_missing,collapse = "|"), files_all)]
+      
+      ### exclude files that have temp in their name
+      files_missing <- files_missing[!grepl("tmp", files_missing)]
       
       ### now for all files that are missing join all three sources and save to destinaiton
       for (file in files_missing){
@@ -152,9 +156,7 @@ for (folder in folders_dest){
           
           # save file
           # print(glue("Saving file: {file}"))
-          write.table(df, file.path(dest_main,folder,subfolder, file),
-                      append = T, sep = ",",
-                      row.names = F, col.names = F)
+          data.table::fwrite(df, file.path(dest_main,folder,subfolder, file))
           
           
           
@@ -206,6 +208,9 @@ for (folder in folders_dest){
     ### get missing files
     ### only start process for files that are missing
     files_missing <- files_all[grepl(paste(dates_missing,collapse = "|"), files_all)]
+    
+    ### exclude files that have temp in their name
+    files_missing <- files_missing[!grepl("tmp", files_missing)]
     
     ### now for all files that are missing join all three sources and save to destinaiton
     for (file in files_missing){
@@ -259,9 +264,7 @@ for (folder in folders_dest){
         
         # save file
         # print(glue("Saving file: {file}"))
-        write.table(df, file.path(dest_main,folder, file),
-                    append = T, sep = ",",
-                    row.names = F, col.names = F)
+        data.table::fwrite(df, file.path(dest_main,folder, file))
         
         
         
