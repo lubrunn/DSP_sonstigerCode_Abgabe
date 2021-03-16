@@ -65,7 +65,7 @@ last_update_finder <- function(dest, likes_filter, retweets_filter,
 
 
 ##### find all files that that need to updated
-missing_files_finder <- function(source_main, folder_all){
+missing_files_finder <- function(source_main, folder_all, last_update){
  
   
   ## source
@@ -73,6 +73,9 @@ missing_files_finder <- function(source_main, folder_all){
   
   #### get all files at source
   all_files <- list.files(source)
+  
+  ### exclude files that have temp in their name
+  all_files <- all_files[!grepl("tmp", all_files)]
   
   #### find last available date
   last_date_avail <- max(parsedate::parse_date(all_files)) 
@@ -88,6 +91,9 @@ missing_files_finder <- function(source_main, folder_all){
   }
   ### only start process for files that are missing
   files_missing <- all_files[grepl(paste(dates_missing,collapse = "|"), all_files)]
+  ### exclude tmp files
+  files_missing<- files_missing[!grepl("tmp", files_missing)]
+  
 
   return(files_missing)
 }
@@ -100,8 +106,9 @@ missing_files_finder <- function(source_main, folder_all){
 
 
 ####### once the files are found, load everyone and perform computations
-file_looper <- function(files_mssing, retweets_filter, likes_filter, length_filter, 
-                        folder, source, folder_dest, lang){
+file_looper <- function(files_missing, retweets_filter, likes_filter, length_filter, 
+                        folder, source, folder_dest, lang, long_name,
+                        db_wd){
   for (file in files_missing){
     # read all dfs (one per day)
     time1 <- Sys.time()
@@ -182,7 +189,7 @@ file_looper <- function(files_mssing, retweets_filter, likes_filter, length_filt
                               
                               filename_rt,
                               filename_likes,
-                              filename_length,
+                              filename_long,
                               
                               
                               filename_sum,
@@ -192,7 +199,8 @@ file_looper <- function(files_mssing, retweets_filter, likes_filter, length_filt
                               filename_senti_likes,
                               filename_senti_length,
                               lang,
-                              company_name = NA)
+                              company_name = NA,
+                              db_wd)
       
       
       
@@ -207,7 +215,7 @@ file_looper <- function(files_mssing, retweets_filter, likes_filter, length_filt
                               
                               filename_rt,
                               filename_likes,
-                              filename_length,
+                              filename_long,
                               
                               
                               filename_sum,
@@ -217,7 +225,8 @@ file_looper <- function(files_mssing, retweets_filter, likes_filter, length_filt
                               filename_senti_likes,
                               filename_senti_length,
                               lang,
-                              company_name =folder )
+                              company_name =folder,
+                              db_wd)
     }
     print(Sys.time() - time1)
     
@@ -250,7 +259,7 @@ data_wrangler_and_saver <- function(df_all,
                                     
                                     filename_rt,
                                     filename_likes,
-                                    filename_length,
+                                    filename_long,
                                     
                                     
                                     filename_sum,
@@ -260,7 +269,8 @@ data_wrangler_and_saver <- function(df_all,
                                     filename_senti_likes,
                                     filename_senti_length,
                                     lang = "",
-                                    company_name = NA){
+                                    company_name = NA,
+                                    db_wd){
   
   
   # remove duplicates
@@ -269,7 +279,7 @@ data_wrangler_and_saver <- function(df_all,
   # call function that creates histograms for all three grouping variables
   # for retweets
   # print("Computing histogram data for rt")
-  # #browser()
+  
   # 
   # 
   # #for retweets
@@ -330,10 +340,9 @@ data_wrangler_and_saver <- function(df_all,
   
   
   
-  # filesnames
   
   ##### save files
-  print(glue::glue("Saving files for {folder}, rt: {retweets_filter}, likes: {likes_filter}, length:{length_filter}"))
+  print(glue::glue("Saving files for {filename_rt}, rt: {retweets_filter}, likes: {likes_filter}, length:{length_filter}"))
   
   # # ##### non sentiment files
    write.table(df_bins_rt, file.path(folder_dest ,filename_rt),
@@ -374,7 +383,7 @@ data_wrangler_and_saver <- function(df_all,
   
   
   #### upload summary stats to sql
-  con <- DBI::dbConnect(RSQLite::SQLite(), df_wd)
+  con <- DBI::dbConnect(RSQLite::SQLite(), db_wd)
   
 
   
@@ -410,7 +419,7 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   
   
   # filter data, group ny and count for gorups  
-  dt <- df[retweets_count >= retweets_filter &
+  dt <- dt[retweets_count >= retweets_filter &
              likes_count >= likes_filter &
              tweet_length >= length_filter,
            .(.N), by = c("created_at", grouping_variable)]
@@ -538,13 +547,17 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
   dt$tweet_length <- length_filter
   
   
+  ### convert created_at to string for sql
+  dt$created_at <- as.character(dt$created_at)
+  
+  
   
   
   
   
   ##################################################################
   
-  print(glue::glue("{file} took {Sys.time() - time_sum}"))
+  
   return(dt)
   
   
@@ -572,7 +585,7 @@ folders <- c("En_NoFilter", "De_NoFilter", "Companies")
 
 
 all_together_putter <- function(folders, likes_list, retweets_list, long_list,
-                                source_main, dest_main)
+                                source_main, dest_main,db_wd)
 for (folder in folders){
   
   
@@ -604,17 +617,20 @@ for (folder in folders){
                                            long_name)
             #### find all files that still need to be updated
             files_missing <- missing_files_finder(source_main = source_main,
-                                                  folder_all = file.path(folder, comp_folder))
+                                                  folder_all = file.path(folder, comp_folder),
+                                                  last_update)
             
             source <- file.path(source_main, folder, comp_folder)
             
             
             #### start compuation for each file
-            file_looper(files_mssing = files_missing, 
+            file_looper(files_missing = files_missing, 
                         retweets_filter, likes_filter, length_filter, 
                         folder = comp_folder, source = source,
                         folder_dest = dest,
-                        lang = "companies")
+                        lang = "companies",
+                        long_name = long_name,
+                        db_wd)
             
           }
         }
@@ -647,18 +663,20 @@ for (folder in folders){
                                           long_name)
         #### find all files that still need to be updated
         files_missing <- missing_files_finder(source_main = source_main,
-                                              folder_all = folder)
+                                              folder_all = folder,
+                                              last_update)
         
         
         
-        source <- file.path(source_main, folder, comp_folder)
+        source <- file.path(source_main, folder)
         
         
-        file_looper(files_mssing = files_missing, 
+        file_looper(files_missing = files_missing, 
                     retweets_filter, likes_filter, length_filter, 
-                    folder = comp_folder, source = source,
+                    folder = folder, source = source,
                     folder_dest = dest,
-                    lang = lang)
+                    lang = lang, long_name = long_name,
+                    db_wd)
         
       }
     }
@@ -672,3 +690,13 @@ for (folder in folders){
   
   
 }
+
+
+
+
+
+####### call function
+
+all_together_putter(folders, likes_list, retweets_list, long_list,
+                                source_main, dest_main,
+                    db_wd)

@@ -57,7 +57,6 @@ files_dest <- list.files(dest)
 
 for (file in files_all){
   
-  # new feather filename
   # filename
   filename <- strsplit(file, "[.]")[[1]][1]
   
