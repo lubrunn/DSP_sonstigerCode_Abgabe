@@ -1,5 +1,5 @@
 import os
-#os.chdir(r"/home/simonhassler/share/local_code/GerVADER-master/")
+os.chdir(r"/home/simonhassler/share/local_code/GerVADER-master/")
 import pandas as pd
 import nltk
 #nltk.download('GERVaderLexicon')
@@ -29,6 +29,7 @@ def get_sentiment(text):
 yesterday = (datetime.today() - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
 
 #complete daterange
+#no range !!!
 date_list_needed = pd.date_range(start="2018-11-30",end=yesterday)
 
 
@@ -53,7 +54,7 @@ for folder in nofilter_folders:
     
     #create new path
     path_new = os.path.join(path,folder)
-    
+   
     #get file names
     files = os.listdir(path_new)
     
@@ -75,7 +76,7 @@ for folder in nofilter_folders:
     #get all missing files and calculate sentiment
     for files_csv in missing_dates:
         #load file
-        tweet = pd.read_csv(f"{path_comp}/{folder}_{missing_dates}",engine='python')  
+        tweet = pd.read_csv(f"{path_comp}/{folder}_{files_csv}",engine='python')  
         #drop row with no tweet
         tweet = tweet.dropna(subset = ['tweet'])   
         #remove strings after date
@@ -94,16 +95,17 @@ for folder in nofilter_folders:
         # calculate sentiment for every tweet
         tweet["sentiment"] = tweet["tweet"].swifter.progress_bar(False).apply(lambda x: get_sentiment(x))
         
-        tweet.to_csv(f"/home/simonhassler/share/Lukas_onedrive/Data/Twitter/sentiment_daily/{folder}_{missing_dates}", 
+        tweet.to_csv(f"/home/simonhassler/share/Lukas_onedrive/Data/Twitter/sentiment_daily/{folder}/{folder}_{files_csv}", 
                     index=False)
+        print(files_csv)
+        
 
-
-folder = "Companies"
+#loop for the companies
 for folder in company_folders:
 
     # new path leading to all subfolders
     path_new = os.path.join(path,folder)
-        
+    path_new_raw = os.path.join(path_raw,folder)
     # list all subfolders
     subfolders = os.listdir(path_new)
 
@@ -112,6 +114,13 @@ for folder in company_folders:
      
         # get all files for that subfolder
         files = os.listdir(os.path.join(path_new,subfolder))
+        files_raw = os.listdir(os.path.join(path_new_raw,subfolder))
+        
+        dates_raw = [re.search(r'\d{4}-\d{2}-\d{2}', file).group() for file in files_raw]
+         
+        # convert to dates
+        dates_list_have_raw = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates_raw)]    
+
         
         # find last date that has been updated
         # extract date from file names
@@ -120,7 +129,7 @@ for folder in company_folders:
         # convert to dates
         dates_list_have = [datetime.strptime(date, "%Y-%m-%d").date() for date in np.array(dates)]    
         #filter missing files
-        missing_dates = [k for k in date_list_needed if k not in dates_list_have]
+        missing_dates = [k for k in dates_list_have_raw if k not in dates_list_have]
         # from timpesatamp to string
         missing_dates = [date_obj.strftime('%Y-%m-%d') for date_obj in missing_dates]
         #paste csv to evry string
@@ -162,7 +171,7 @@ for folder in company_folders:
             tweet_full.to_csv(f"/home/simonhassler/share/Lukas_onedrive/Data/Twitter/sentiment_daily/{folder}/{subfolder}/{subfolder}_{a}", 
                                 index=False)
 
-
+            print(a)
 
 
 
