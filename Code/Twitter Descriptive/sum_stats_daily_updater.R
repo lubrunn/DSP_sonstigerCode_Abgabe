@@ -414,12 +414,12 @@ data_wrangler_and_saver <- function(df_all,
  the live computation would be somewhat fast enough but for broad filter (retweets  >0)
  computation would take up to 1 minute per histogram
 '
-hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, grouping_variable, company_name = NA){
+hist_data_creator <- function(dt_orig, retweets_filter, likes_filter, length_filter, grouping_variable, company_name = NA){
   time_hist <- Sys.time()
   
   
   # filter data, group ny and count for gorups  
-  dt <- dt[retweets_count >= retweets_filter &
+  dt <- dt_orig[retweets_count >= retweets_filter &
              likes_count >= likes_filter &
              tweet_length >= length_filter,
            .(.N), by = c("created_at", grouping_variable)]
@@ -431,9 +431,31 @@ hist_data_creator <- function(dt, retweets_filter, likes_filter, length_filter, 
   # if its a file from a company folder add the company name as column
   if (!is.na(company_name)){
     dt$company <- company_name
+    if (dim(dt)[1] == 0){
+      dt <- data.frame("created_at" = dt_orig$created_at[1] , grouping_variable = as.integer(NA),
+                       "N" = as.integer(NA), "company" = company_name, 
+                       "retweets_count_filter"  = as.integer(NA),
+                       "likes_count_filter" = as.integer(NA), "tweet_length_filter" = as.integer(NA))
+      
+      names(dt)[names(dt) == "grouping_variable"] <- grouping_variable
+      
+      
+      return(dt)
+      
+    }
   } 
   
   
+  ##### ontrol for empty df when there are no tweets for filters
+  if (dim(dt)[1] == 0){
+    dt <- data.frame("created_at" = dt_orig$created_at[1], grouping_variable = as.integer(NA),
+                     "N" = as.integer(NA), "retweets_count_filter"  = as.integer(NA),
+                     "likes_count_filter" = as.integer(NA), "tweet_length_filter" = as.integer(NA))
+    
+    names(dt)[names(dt) == "grouping_variable"] <- grouping_variable
+    return(dt)
+    
+  }
   
   # add filters
   dt$retweets_count_filter <- retweets_filter
@@ -535,16 +557,30 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
   
   
   
-  # if its a file from a company folder add the company name as column
-  if (!is.na(company_name)){
-    dt$company <- company_name
-  } 
   
   
+  
+ 
   # add used filters
   dt$retweets_count <- retweets_filter
   dt$likes_count <- likes_filter
   dt$tweet_length <- length_filter
+  
+  
+  # if its a file from a company folder add the company name as column
+  if (!is.na(company_name)){
+    dt$company <- company_name
+    
+    if (dim(dt)[1] == 0){
+      df_empty <- data.frame(rep(NA,44)) %>% t() %>% data.frame()
+      names(df_empty) <- names(dt)
+      df_empty$created_at <- as.character(df_all$created_at[1])
+      #reset rownames
+      rownames(df_empty) <- NULL
+      return(df_empty)
+    }
+    
+  } 
   
   
   ### convert created_at to string for sql
@@ -568,20 +604,6 @@ sum_stats_creator <- function(df_all, retweets_filter, likes_filter, length_filt
 
 
 
-likes_list <- c(0, 10, 50, 100, 200)
-retweets_list <- c(0, 10, 50, 100, 200)
-long_list <- c(0,81)
-
-source_main <- "sentiment_daily"
-dest_main <- "plot_data"
-
-folders <- c("En_NoFilter", "De_NoFilter", "Companies")
-
-
-######## find last available date at source (sentiment)
-#### last available date at source
-
-
 
 
 all_together_putter <- function(folders, likes_list, retweets_list, long_list,
@@ -595,6 +617,7 @@ for (folder in folders){
     #### list all company folders
     company_folders <- list.files(file.path(source_main, folder))
     #### go thru each company folder
+    
     for (comp_folder in company_folders){
       
       #### set destination
@@ -692,6 +715,20 @@ for (folder in folders){
 }
 
 
+
+
+likes_list <- c(0, 10, 50, 100, 200)
+retweets_list <- c(0, 10, 50, 100, 200)
+long_list <- c(0,81)
+
+source_main <- "sentiment_daily"
+dest_main <- "plot_data"
+
+#folders <- c("En_NoFilter", "De_NoFilter", "Companies")
+folders <- "Companies"
+
+######## find last available date at source (sentiment)
+#### last available date at source
 
 
 
