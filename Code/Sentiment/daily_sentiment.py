@@ -1,5 +1,7 @@
+import sys
+sys.path.append('/home/simonhassler/share/anaconda3/lib/python3.8/site-packages/')
 import os
-os.chdir(r"/home/simonhassler/share/local_code/GerVADER-master/")
+#os.chdir(r"/home/simonhassler/share/local_code/GerVADER-master/")
 import pandas as pd
 import nltk
 #nltk.download('GERVaderLexicon')
