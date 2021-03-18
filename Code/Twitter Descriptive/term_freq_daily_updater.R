@@ -227,15 +227,17 @@ term_freq_computer <- function(df, file, dest,
   
   ### when nothing ofund for this date then return df with date but NAs so doesnt get run again next day
   if (dim(df1)[1] == 0){
-    df1 <- data.frame("date_variable" = df$date_variable[1], "language_variable" = NA, "word" = NA, "N"= NA,
-                      "retweets_count" = NA, "likes_count" = NA, "tweet_length" = NA,
-                      "emo" = NA)
+    df1 <- data.frame("date_variable" = df$date_variable[1], "language_variable" = as.character(NA), "word" =  as.character(NA), 
+                      "N"= as.integer(NA),
+                      "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
+                      "emo" = as.logical(NA))
   }
   
   if (dim(df2)[1] == 0){
-    df2 <- data.frame("date_variable" = df$date_variable[1], "language_variable" = NA, "word" = NA, "N"= NA,
-               "retweets_count" = NA, "likes_count" = NA, "tweet_length" = NA,
-               "emo" = NA)
+    df2 <- data.frame("date_variable" = df$date_variable[1], "language_variable" =  as.character(NA), "word" =  as.character(NA), 
+                      "N"= as.integer(NA),
+               "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
+               "emo" = as.logical(NA))
   }
  
   
@@ -422,7 +424,7 @@ file_looper <- function(source_main, folder,subfolder_comp, files,
                          long_name,
                          filename_new_single,
                          filename_new_bi,
-                         min_occ = 1)
+                         min_occ = 2)
       print(Sys.time() - time1)
       print("Storing items in list")
       ### if first df than df_list_all = df_list_new
@@ -682,8 +684,8 @@ long_list <- c(0,81)
 
 source_main <- "cleaned"
 #source_main_comp <- "cleaned/appended"
-#folders <- c("En_NoFilter","De_NoFilter", "Companies2")
-folders <- "Companies2"
+folders <- c("En_NoFilter","De_NoFilter", "Companies2")
+#folders <- "Companies2"
 
 
 
