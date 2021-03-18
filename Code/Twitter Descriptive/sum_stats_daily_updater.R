@@ -1,6 +1,6 @@
 library(tidyverse)
 library(R.utils)
-
+library(glue)
 
 
 
@@ -43,15 +43,25 @@ last_update_finder <- function(dest, likes_filter, retweets_filter,
   # set up empty list to append dates to
   dates_last_update <- c()
   
-  #### only check two files because otherwise takes too long
-  for (file in files[7:8]){
+  #### only check 1 files because otherwise takes too long
+  for (file in files[1]){
     #### read in only last line to see what last date was
     l2keep <- 1
     nL <- R.utils::countLines(file.path(dest, file))
     last_update <- read.csv(file.path(dest, file), header=FALSE, skip=nL-l2keep) %>% select(V1) %>% unlist()
     ## append date
+    ### control for empty csvs
+    if (!grepl("-", last_update)) {
+      last_update = Sys.Date() - lubridate::days(1)
+    } 
+    
     dates_last_update <- rlist::list.append(dates_last_update, format(as.POSIXct(last_update), format="%Y-%m-%d"))
+    
   }
+  
+  
+    
+  
   
   #### get minimum last update
   last_update <- min(dates_last_update)
@@ -86,7 +96,7 @@ missing_files_finder <- function(source_main, folder_all, last_update){
   if (as.Date(last_update) < as.Date(last_date_avail)) {
   dates_missing <- seq(as.Date(last_update) + lubridate::days(1) , as.Date(last_date_avail), by="days")
   } else {
-    print("no missing dates found")
+    print(glue("no missing dates found for {source}"))
     return(c())
   }
   ### only start process for files that are missing
@@ -307,23 +317,23 @@ data_wrangler_and_saver <- function(df_all,
                                      length_filter, "sentiment_rd", 
                                      company_name)
 
-  # for sentiment * rt
-  print("Computing histogram data for senti weighted by rt")
-  df_bins_senti_rt <- hist_data_creator(df_all, retweets_filter, likes_filter,
-                                        length_filter, "sentiment_rt_rd", 
-                                        company_name)
-
-  # for sentiment * likes
-  print("Computing histogram data for senti weighted by likes")
-  df_bins_senti_likes <- hist_data_creator(df_all, retweets_filter, likes_filter,
-                                           length_filter, "sentiment_likes_rd", 
-                                           company_name)
-
-  # for sentiment * tweet_length
-  print("Computing histogram data for senti weighted by length")
-  df_bins_senti_length <- hist_data_creator(df_all, retweets_filter, likes_filter,
-                                            length_filter, "sentiment_length_rd", 
-                                            company_name)
+  # # for sentiment * rt
+  # print("Computing histogram data for senti weighted by rt")
+  # df_bins_senti_rt <- hist_data_creator(df_all, retweets_filter, likes_filter,
+  #                                       length_filter, "sentiment_rt_rd", 
+  #                                       company_name)
+  # 
+  # # for sentiment * likes
+  # print("Computing histogram data for senti weighted by likes")
+  # df_bins_senti_likes <- hist_data_creator(df_all, retweets_filter, likes_filter,
+  #                                          length_filter, "sentiment_likes_rd", 
+  #                                          company_name)
+  # 
+  # # for sentiment * tweet_length
+  # print("Computing histogram data for senti weighted by length")
+  # df_bins_senti_length <- hist_data_creator(df_all, retweets_filter, likes_filter,
+  #                                           length_filter, "sentiment_length_rd", 
+  #                                           company_name)
 
 
 
@@ -333,7 +343,7 @@ data_wrangler_and_saver <- function(df_all,
   # call function that computes means by day and language of all variables
   print("Computing sum stats data")
   df_sum_stats <- sum_stats_creator(df_all,retweets_filter, likes_filter,
-                                    length_filter, 
+                                    length_filter,
                                     company_name)
   ############
   
@@ -367,26 +377,26 @@ data_wrangler_and_saver <- function(df_all,
                append = T, sep = ",",
                row.names = F, col.names = F)
    
-   write.table(df_bins_senti_rt, file.path( folder_dest ,filename_senti_rt),
-               append = T, sep = ",",
-               row.names = F, col.names = F)
-   
-   write.table(df_bins_senti_likes, file.path( folder_dest ,filename_senti_likes),
-               append = T, sep = ",",
-               row.names = F, col.names = F)
-   
-   write.table(df_bins_senti_length, file.path( folder_dest ,filename_senti_length),
-               append = T, sep = ",",
-               row.names = F, col.names = F)
-  
+   # write.table(df_bins_senti_rt, file.path( folder_dest ,filename_senti_rt),
+   #             append = T, sep = ",",
+   #             row.names = F, col.names = F)
+   # 
+   # write.table(df_bins_senti_likes, file.path( folder_dest ,filename_senti_likes),
+   #             append = T, sep = ",",
+   #             row.names = F, col.names = F)
+   # 
+   # write.table(df_bins_senti_length, file.path( folder_dest ,filename_senti_length),
+   #             append = T, sep = ",",
+   #             row.names = F, col.names = F)
+   # 
   
   
   
   #### upload summary stats to sql
   con <- DBI::dbConnect(RSQLite::SQLite(), db_wd)
-  
 
-  
+
+
   # for sum stats
   RSQLite::dbWriteTable(
     con,
@@ -394,12 +404,12 @@ data_wrangler_and_saver <- function(df_all,
     df_sum_stats,
     append = T
   )
-  
-  
+
+
 
   ### disconnect
   DBI::dbDisconnect(con)
-  
+
   
 }
 
@@ -417,22 +427,33 @@ data_wrangler_and_saver <- function(df_all,
 hist_data_creator <- function(dt_orig, retweets_filter, likes_filter, length_filter, grouping_variable, company_name = NA){
   time_hist <- Sys.time()
   
+  if (!is.na(company_name)){
+    # group company data also by language
   
   # filter data, group ny and count for gorups  
   dt <- dt_orig[retweets_count >= retweets_filter &
              likes_count >= likes_filter &
              tweet_length >= length_filter,
-           .(.N), by = c("created_at", grouping_variable)]
+           .(.N), by = c("created_at", "language", grouping_variable)]
   
-  
+  } else {
+    # filter data, group ny and count for gorups  
+    dt <- dt_orig[retweets_count >= retweets_filter &
+                    likes_count >= likes_filter &
+                    tweet_length >= length_filter,
+                  .(.N), by = c("created_at", grouping_variable)]
+  }
   
   
   ########## add infos
   # if its a file from a company folder add the company name as column
+  
+  #### if df empty than add empty row with date
   if (!is.na(company_name)){
     dt$company <- company_name
     if (dim(dt)[1] == 0){
-      dt <- data.frame("created_at" = dt_orig$created_at[1] , grouping_variable = as.integer(NA),
+      dt <- data.frame("created_at" = dt_orig$created_at[1] , language = as.character(NA),
+                       grouping_variable = as.integer(NA),
                        "N" = as.integer(NA), "company" = company_name, 
                        "retweets_count_filter"  = as.integer(NA),
                        "likes_count_filter" = as.integer(NA), "tweet_length_filter" = as.integer(NA))
@@ -617,7 +638,7 @@ for (folder in folders){
     #### list all company folders
     company_folders <- list.files(file.path(source_main, folder))
     #### go thru each company folder
-    
+    #company_folders <- "Linde"
     for (comp_folder in company_folders){
       
       #### set destination
@@ -634,7 +655,7 @@ for (folder in folders){
             } else{
               long_name <- "all"
             }
-            
+           #browser()
             #### get last updated date for this paritucalr filter option in the company folder
             last_update <- last_update_finder(dest = dest, likes_filter, retweets_filter, 
                                            long_name)
@@ -724,8 +745,8 @@ long_list <- c(0,81)
 source_main <- "sentiment_daily"
 dest_main <- "plot_data"
 
-#folders <- c("En_NoFilter", "De_NoFilter", "Companies")
-folders <- "Companies"
+folders <- c("En_NoFilter", "De_NoFilter", "Companies")
+#folders <- "Companies"
 
 ######## find last available date at source (sentiment)
 #### last available date at source
