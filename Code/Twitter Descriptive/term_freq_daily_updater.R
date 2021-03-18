@@ -237,7 +237,7 @@ term_freq_computer <- function(df, file, dest,
                "retweets_count" = NA, "likes_count" = NA, "tweet_length" = NA,
                "emo" = NA)
   }
-  df_list_new <- list(df1 = df1, df2 = df2)
+ 
   
   
   ### account for fact that in company files rt_count etc. are not in csvs
@@ -245,7 +245,9 @@ term_freq_computer <- function(df, file, dest,
     df1 <- df1 %>% select(date_variable, language_variable, word, N, emo)
     df2 <- df2 %>% select(date_variable, language_variable, word, N, emo)
   }
-  browser()
+  
+  df_list_new <- list(df1 = df1, df2 = df2)
+  
   return(df_list_new)
   
   
