@@ -133,7 +133,7 @@ term_freq_computer <- function(df, file, dest,
   
   
   
-  
+  browser()
   
   # selector<-function(df,threshold_single, retweets_filter, likes_filter, length_filter){
   #   
@@ -225,20 +225,41 @@ term_freq_computer <- function(df, file, dest,
   df2[, emo := grepl(paste(emoji_words, collapse = "|"), word)]
   }
   
-  ### when nothing ofund for this date then return df with date but NAs so doesnt get run again next day
-  if (dim(df1)[1] == 0){
-    df1 <- data.frame("date_variable" = df$date_variable[1], "language_variable" = as.character(NA), "word" =  as.character(NA), 
-                      "N"= as.integer(NA),
-                      "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
-                      "emo" = as.logical(NA))
+  
+  ###### for nofilter set up empty df in case of empty df so date does not get teted again next time
+  if (grepl("NoFilter", filename_new_bi)){
+    ### when nothing ofund for this date then return df with date but NAs so doesnt get run again next day
+    if (dim(df1)[1] == 0){
+      df1 <- data.frame("date_variable" = df$date[1], "language_variable" = as.character(NA), "word" =  as.character(NA), 
+                        "N"= as.integer(NA),
+                        "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
+                        "emo" = as.logical(NA))
+    }
+    
+    if (dim(df2)[1] == 0){
+      df2 <- data.frame("date_variable" = df$date[1], "language_variable" =  as.character(NA), "word" =  as.character(NA), 
+                        "N"= as.integer(NA),
+                        "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
+                        "emo" = as.logical(NA))
+    }
+  } else {
+    ### when nothing ofund for this date then return df with date but NAs so doesnt get run again next day
+    if (dim(df1)[1] == 0){
+      df1 <- data.frame("date_variable" = df$date_variable[1], "language_variable" = as.character(NA), "word" =  as.character(NA), 
+                        "N"= as.integer(NA),
+                        "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
+                        "emo" = as.logical(NA))
+    }
+    
+    if (dim(df2)[1] == 0){
+      df2 <- data.frame("date_variable" = df$date_variable[1], "language_variable" =  as.character(NA), "word" =  as.character(NA), 
+                        "N"= as.integer(NA),
+                        "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
+                        "emo" = as.logical(NA))
+    }
   }
   
-  if (dim(df2)[1] == 0){
-    df2 <- data.frame("date_variable" = df$date_variable[1], "language_variable" =  as.character(NA), "word" =  as.character(NA), 
-                      "N"= as.integer(NA),
-               "retweets_count" = as.integer(NA), "likes_count" = as.integer(NA), "tweet_length" = as.integer(NA),
-               "emo" = as.logical(NA))
-  }
+ 
  
   
   

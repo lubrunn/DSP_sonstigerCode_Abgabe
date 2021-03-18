@@ -655,7 +655,7 @@ for (folder in folders){
             } else{
               long_name <- "all"
             }
-           #browser()
+           
             #### get last updated date for this paritucalr filter option in the company folder
             last_update <- last_update_finder(dest = dest, likes_filter, retweets_filter, 
                                            long_name)
