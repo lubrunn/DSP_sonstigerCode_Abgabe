@@ -119,7 +119,8 @@ Sys.time() - time1
 con <- DBI::dbConnect(RSQLite::SQLite(), "C:/Users/lukas/OneDrive - UT Cloud/Data/SQLiteStudio/databases/clean_database.db",
                       encoding = 'UTF-8')
 
-df_need <- DBI::dbGetQuery(con, "select distinct(company) from sum_stats_companies")
+df_need <- DBI::dbGetQuery(con, "select * from sum_stats_companies where company = '3M' and likes_count = 0 and
+                           retweets_count = 0 and tweet_length = 0 and language = 'de'")
 
 
 
