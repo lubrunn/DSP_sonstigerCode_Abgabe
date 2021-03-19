@@ -1,8 +1,0 @@
-
-from crontab import CronTab
-cron = CronTab(user = "lukasbrunner")
-
-job = cron.new(command = "python /home/lukasbrunner/share/scraper_and_jsonconverter.py")
-job.minute.every(1)
-
-cron.write()
