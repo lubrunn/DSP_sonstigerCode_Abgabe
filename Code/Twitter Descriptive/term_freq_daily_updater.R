@@ -133,7 +133,7 @@ term_freq_computer <- function(df, file, dest,
   
   
   
-  browser()
+  
   
   # selector<-function(df,threshold_single, retweets_filter, likes_filter, length_filter){
   #   
