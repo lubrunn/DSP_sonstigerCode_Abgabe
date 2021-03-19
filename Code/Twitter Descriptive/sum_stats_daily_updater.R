@@ -631,7 +631,7 @@ all_together_putter <- function(folders, likes_list, retweets_list, long_list,
                                 source_main, dest_main,db_wd)
 for (folder in folders){
   
-  
+ 
   
   
   if (grepl("Companies", folder)){
@@ -746,7 +746,8 @@ source_main <- "sentiment_daily"
 dest_main <- "plot_data"
 
 folders <- c("En_NoFilter", "De_NoFilter", "Companies")
-#folders <- "Companies"
+#folders <- "De_NoFilter"
+#folders <- c("De_NoFilter", "Companies")
 
 ######## find last available date at source (sentiment)
 #### last available date at source
