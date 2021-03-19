@@ -27,8 +27,8 @@ def get_sentiment(text):
 
 
 # get date from yesterday
-yesterday = (datetime.today() - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
-
+#yesterday = (datetime.today() - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+yesterday =  (datetime.today()).strftime('%Y-%m-%d')
 #complete daterange
 #no range !!!
 date_list_needed = pd.date_range(start="2018-11-30",end=yesterday)
